@@ -1,6 +1,7 @@
 import test from 'node:test';
+import { readFileSync } from 'node:fs';
 import assert from 'node:assert/strict';
-import { createExport } from '../js/config.js';
+import { createExport, prepareImport, validateConfig, parseConfig } from '../js/config.js';
 
 const tree = [{ id: '0', children: [{ id: '1', title: 'Bookmarks Bar', children: [
     { id: '2', title: 'Work', children: [] },
@@ -29,4 +30,77 @@ test('export uses portable references, keeps duplicate URLs, settings, wallpaper
 test('unidentifiable tiles fail instead of silently producing incomplete backups', () => {
     assert.throws(() => createExport({}, [tile('missing')], tree), /Cannot identify/);
     assert.deepEqual(createExport({}, [], []).tiles, []);
+});
+
+
+test('import resolves new browser IDs, folders, settings and wallpaper', () => {
+    const config = createExport({ gridColumns: 12 }, [tile('2'), tile('3')], tree);
+    const moved = structuredClone(tree);
+    moved[0].children[0].children[0].id = '200';
+    moved[0].children[0].children[1].id = '300';
+    const result = prepareImport(config, moved);
+    assert.deepEqual(result.tiles.map(tile => tile.id), ['200', '300']);
+    assert.equal(result.tiles[1].bookmarkSnapshot.url, config.tiles[1].url);
+    assert.equal(result.globalSettings.gridColumns, 12);
+    assert.equal(result.desktopBackgroundImage, null);
+    assert.equal(result.setupComplete, true);
+});
+
+test('import rejects malformed settings, unsupported versions and unsafe geometry', () => {
+    const config = createExport({}, [tile('3')], tree);
+    for (const mutate of [c => c.version = 2, c => c.settings.openInNewTab = 'true',
+        c => c.tiles[0].x = -1, c => c.tiles[0].w = 100,
+        c => c.settings.desktopBackgroundImage = 'https://example.com/image',
+        c => c.tiles[0].textColor = 'red', c => c.settings.extra = true]) {
+        const invalid = structuredClone(config);
+        mutate(invalid);
+        assert.throws(() => validateConfig(invalid));
+    }
+    assert.throws(() => validateConfig(null));
+    assert.throws(() => validateConfig({}));
+});
+
+test('missing matches and ambiguous folder paths abort; duplicate URLs use distinct bookmarks', () => {
+    const config = createExport({}, [tile('3')], tree);
+    assert.throws(() => prepareImport(config, []), /not found/);
+    config.tiles.push(structuredClone(config.tiles[0]));
+    assert.throws(() => prepareImport(config, tree), /Not enough/);
+    const duplicates = structuredClone(tree);
+    duplicates[0].children[0].children.push({ id: '4', url: config.tiles[0].url });
+    assert.deepEqual(prepareImport(config, duplicates).tiles.map(tile => tile.id), ['3', '4']);
+    const folders = createExport({}, [tile('2')], tree);
+    duplicates[0].children[0].children.push({ id: '5', title: 'Work', children: [] });
+    assert.throws(() => prepareImport(folders, duplicates), /Ambiguous/);
+    assert.deepEqual(prepareImport(createExport({}, [], tree), tree).tiles, []);
+});
+
+
+test('validation reports the first problem with its field path and expected value', () => {
+    const config = createExport({}, [tile('3')], tree);
+    const cases = [
+        [c => c.settings.gridColumns = 50, 'settings.gridColumns: expected an integer from 6 to 36; found 50.'],
+        [c => delete c.tiles[0].url, 'tiles[0].url: required field is missing.'],
+        [c => c.tiles[0].backgroundColor = 'red', 'tiles[0].backgroundColor: expected a hex color such as "#abcdef", or "" for the default; found "red".'],
+        [c => c.version = 2, 'version: unsupported version 2; this version of Signpost supports version 1.'],
+        [c => c.settings.extra = true, 'settings.extra: unknown field; remove it from the configuration.'],
+        [c => c.tiles[0].x = -1, 'tiles[0].x: expected an integer of at least 0; found -1.'],
+        [c => c.settings.openInNewTab = 'true', 'settings.openInNewTab: expected true or false; found "true".'],
+        [c => { c.tiles[0].type = 'folder'; delete c.tiles[0].url; c.tiles[0].path = ['Work', 123]; }, 'tiles[0].path[1]: expected a folder title string; found 123.']
+    ];
+    for (const [mutate, message] of cases) {
+        const invalid = structuredClone(config);
+        mutate(invalid);
+        assert.throws(() => validateConfig(invalid), { message });
+    }
+    assert.throws(() => validateConfig(null), { message: 'configuration: expected an object; found null.' });
+    assert.throws(() => parseConfig('{'), /Invalid JSON syntax:/);
+    assert.deepEqual(parseConfig(JSON.stringify(config)), config);
+});
+
+test('manual invalid import fixtures demonstrate configuration and syntax errors', () => {
+    const fixture = name => readFileSync(new URL(name, import.meta.url), 'utf8');
+    assert.throws(() => parseConfig(fixture('config-invalid.json')), {
+        message: 'settings.gridColumns: expected an integer from 6 to 36; found 50.'
+    });
+    assert.throws(() => parseConfig(fixture('config-invalid-syntax.json')), /Invalid JSON syntax:/);
 });

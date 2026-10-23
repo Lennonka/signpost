@@ -1,3 +1,5 @@
+import { prepareImport } from './js/config.js';
+import { bookmarksGetTree } from './js/bookmarks.js';
 import { mutateLayout, applyLayoutChanges } from './js/layout-store.js';
 import { createBookmarkSnapshot, normalizeGridColumns } from './js/model.js';
 import { findFirstEmptyTilePosition } from './js/placement.js';
@@ -80,6 +82,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'import-signpost-config') {
+        bookmarksGetTree().then(tree => {
+            const data = prepareImport(message.config, tree);
+            return mutateLayout(() => ({ data: { ...data, configRevision: crypto.randomUUID() } }));
+        }).then(() => sendResponse({ ok: true }))
+            .catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+        return true;
+    }
+
     if (message?.type === 'update-signpost-layout') {
         applyLayoutChanges(message)
             .then(() => sendResponse({ ok: true }))

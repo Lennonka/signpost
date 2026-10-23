@@ -160,6 +160,14 @@
                 <p class="settings-description">Save your settings, background image, and tile layout to a JSON file.</p>
                 <button id="export-settings" class="secondary-action">Export to JSON</button>
             </section>
+            <section class="settings-section">
+                <h4>Import configuration</h4>
+                <p class="settings-description">Load your settings, background image, and tile layout from a JSON file.</p>
+                <label class="setting-row file-setting">
+                    <input id="import-settings" type="file" accept=".json,application/json" aria-label="Import configuration from JSON" />
+                </label>
+                <p id="import-status" class="settings-description" role="status" aria-live="polite"></p>
+            </section>
         </div>
 
         <div class="settings-footer">

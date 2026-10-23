@@ -1,0 +1,19 @@
+{
+  "format": "signpost",
+  "version": 1,
+  "exportedAt": "2026-10-23T12:00:00.000Z",
+  "settings": {
+    "openInNewTab": false,
+    "confirmBeforeRemove": false,
+    "gridColumns": 50,
+    "desktopBackgroundColor": "#ffffff",
+    "desktopTextSize": 14,
+    "defaultTileBackgroundColor": "#dbdbdb",
+    "defaultLinkTextColor": "#0000ee",
+    "tileBackgroundTransparency": 50,
+    "alwaysShowResizeHandle": false,
+    "alwaysShowMenuIcon": false,
+    "desktopBackgroundImage": null
+  },
+  "tiles": []
+}

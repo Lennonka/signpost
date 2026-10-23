@@ -47,6 +47,9 @@ export async function restoreCachedBackground() {
         if (desktopBackgroundImage) {
             applyDesktopBackgroundImage(desktopBackgroundImage);
             cacheDesktopBackgroundImage(desktopBackgroundImage);
+        } else {
+            clearDesktopBackgroundImage();
+            removeCachedDesktopBackgroundImage();
         }
     } catch (error) {
         console.warn('Could not load desktop background image.', error);

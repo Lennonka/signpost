@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createExport } from '../js/config.js';
 
 let onMessage;
 const event = () => ({ addListener() {} });
@@ -17,6 +18,7 @@ globalThis.chrome = {
     tabs: { onActivated: event(), onUpdated: event() },
     bookmarks: {
         onCreated: event(), onRemoved: event(), onChanged: event(),
+        getTree(callback) { callback([{ id: '0', children: bookmarks }]); },
         search(query, callback) { callback(bookmarks.filter(bookmark => bookmark.url === query.url)); }
     },
     storage: {
@@ -56,4 +58,19 @@ test('module worker accepts desktop changes and rejects unsupported page URLs', 
     assert.equal(invalid.ok, false);
     assert.match(invalid.error, /Only web pages/);
     assert.equal(onMessage({ type: 'unknown' }, {}, () => {}), false);
+});
+
+
+test('worker replaces configuration together and preserves state on rejected imports', async () => {
+    const config = createExport({ gridColumns: 12 }, [], []);
+    const response = await message({ type: 'import-signpost-config', config });
+    assert.equal(response.ok, true);
+    assert.deepEqual(state.tiles, []);
+    assert.equal(state.globalSettings.gridColumns, 12);
+    assert.equal(state.desktopBackgroundImage, null);
+    assert.equal(typeof state.configRevision, 'string');
+    const before = structuredClone(state);
+    const invalid = await message({ type: 'import-signpost-config', config: { ...config, version: 99 } });
+    assert.equal(invalid.ok, false);
+    assert.deepEqual(state, before);
 });

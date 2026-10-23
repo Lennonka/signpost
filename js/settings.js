@@ -64,7 +64,7 @@ export function createSettings() {
     function saveSettings() {
         clearTimeout(saveTimer);
         saveTimer = undefined;
-        persist({ globalSettings: { ...globalSettings } });
+        return persist({ globalSettings: { ...globalSettings } });
     }
 
     function updateSettings(patch, { defer = false } = {}) {
@@ -124,5 +124,11 @@ export function createSettings() {
         });
     }
 
-    return { globalSettings, initialize };
+    chrome.storage.onChanged.addListener((changes, area) => {
+        if (area === 'local' && changes.configRevision) {
+            clearTimeout(saveTimer);
+            saveTimer = undefined;
+        }
+    });
+    return { globalSettings, initialize, flush: saveSettings };
 }

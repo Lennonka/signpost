@@ -35,6 +35,11 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
     grid.on('change', saveLayout);
 
     chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes.configRevision) {
+            suppressLayoutSave = true;
+            location.reload();
+            return;
+        }
         if (areaName !== 'local' || !changes.tiles) return;
         const tiles = Array.isArray(changes.tiles.newValue) ? changes.tiles.newValue : [];
         const previousIds = new Set((changes.tiles.oldValue || []).map(tile => String(tile.id)));

@@ -169,6 +169,24 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`document.getElementById('reset-settings').checkVisibility()`), true);
     await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
 
+    // Invalid files report an error, and cancelling a valid import leaves state intact.
+    await browser.evaluate(`const badFiles = new DataTransfer(); badFiles.items.add(new File(['{}'], 'bad.json', { type: 'application/json' })); document.getElementById('import-settings').files = badFiles.files; document.getElementById('import-settings').dispatchEvent(new Event('change'));`);
+    await until(browser, `document.getElementById('import-status').textContent.startsWith('Import failed:')`);
+    assert.equal(await browser.evaluate(`document.getElementById('import-status').textContent`), 'Import failed: format: required field is missing. Your configuration has not been changed.');
+    await browser.evaluate(`(async () => {
+        const { createExport } = await import('./js/config.js');
+        const config = createExport({}, [], fixture.tree);
+        const files = new DataTransfer(); files.items.add(new File([JSON.stringify(config)], 'config.json', { type: 'application/json' }));
+        fixture.beforeImport = JSON.stringify(fixture.data);
+        window.confirm = () => false;
+        document.getElementById('import-settings').files = files.files;
+        document.getElementById('import-settings').dispatchEvent(new Event('change'));
+    })()`);
+    await until(browser, `!document.getElementById('import-settings').disabled`);
+    assert.equal(await browser.evaluate(`JSON.stringify(fixture.data) === fixture.beforeImport`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('import-status').textContent`), '');
+    await browser.evaluate(`window.confirm = () => true`);
+
     // Popup and context-menu writes must appear without navigating or reloading.
     await browser.evaluate(`fixture.externalAdd({ id: '50', x: 5, y: 0, w: 1, h: 1, backgroundColor: '', textColor: '', bookmarkSnapshot: { id: '50', title: 'Added externally', url: 'https://external.example/', isFolder: false, children: [] } })`);
     await until(browser, `document.querySelector('[gs-id="50"] .bookmark-title')?.textContent === 'Added externally'`);
