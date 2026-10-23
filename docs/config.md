@@ -1,6 +1,6 @@
 # JSON export
 
-Open Settings and select **Export to JSON** to download `signpost-YYYY-MM-DD.json` (UTC date). Export captures the current desktop layout and settings, including recent edits and the uploaded wallpaper. Import is not implemented.
+Open Settings → Backup and select **Export to JSON** to download `signpost-YYYY-MM-DD.json` (UTC date). Export captures the current desktop layout and settings, including recent edits and the uploaded wallpaper. Import is not implemented.
 
 The machine-readable contract is [config.schema.json](config.schema.json), using JSON Schema draft 2020-12. The top-level `format` is always `signpost`; `version: 1` identifies this contract. `exportedAt` is an ISO 8601 UTC timestamp.
 

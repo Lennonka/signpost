@@ -155,6 +155,20 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').textColor`), '#abcdef');
     assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile').style.backgroundColor`), 'rgba(18, 52, 86, 0.5)');
 
+    // Settings tabs switch visible actions and support keyboard navigation.
+    await browser.evaluate(`document.getElementById('btn-settings').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), true);
+    await browser.evaluate(`document.getElementById('settings-tab-backup').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-configure').hidden`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('export-settings').checkVisibility()`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('reset-settings').checkVisibility()`), false);
+    await browser.evaluate(`document.getElementById('settings-tab-backup').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))`);
+    assert.equal(await browser.evaluate(`document.activeElement.id`), 'settings-tab-configure');
+    assert.equal(await browser.evaluate(`document.getElementById('settings-tab-configure').getAttribute('aria-selected')`), 'true');
+    assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('reset-settings').checkVisibility()`), true);
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
+
     // Popup and context-menu writes must appear without navigating or reloading.
     await browser.evaluate(`fixture.externalAdd({ id: '50', x: 5, y: 0, w: 1, h: 1, backgroundColor: '', textColor: '', bookmarkSnapshot: { id: '50', title: 'Added externally', url: 'https://external.example/', isFolder: false, children: [] } })`);
     await until(browser, `document.querySelector('[gs-id="50"] .bookmark-title')?.textContent === 'Added externally'`);
@@ -175,7 +189,13 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
 
     await browser.evaluate(`const input = document.getElementById('setting-grid-columns'); input.value = '18'; input.dispatchEvent(new Event('input'));`);
     await until(browser, `fixture.data.globalSettings.gridColumns === 18`);
-    await browser.evaluate(`document.getElementById('reset-settings').click()`);
+    await browser.evaluate(`const newTabInput = document.getElementById('setting-new-tab'); newTabInput.checked = true; newTabInput.dispatchEvent(new Event('change'));`);
+    await until(browser, `fixture.data.globalSettings.openInNewTab === true`);
+    await browser.evaluate(`window.confirm = message => { fixture.resetWarning = message; return false; }; document.getElementById('reset-settings').click()`);
+    assert.equal(await browser.evaluate(`fixture.data.globalSettings.openInNewTab`), true);
+    assert.match(await browser.evaluate(`fixture.resetWarning`), /irreversible/);
+    await browser.evaluate(`window.confirm = () => true; document.getElementById('reset-settings').click()`);
+    await until(browser, `fixture.data.globalSettings.openInNewTab === false`);
     assert.equal(await browser.evaluate(`fixture.data.globalSettings.gridColumns`), 18);
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').backgroundColor`), '#123456');
 

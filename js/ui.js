@@ -22,6 +22,30 @@ export function showBubbleMessage(text, duration = 2000) {
 }
 
 export function bindToolbar({ loadBookmarks }) {
+    const settingsTabs = [...document.querySelectorAll('.settings-tabs [role="tab"]')];
+    function selectSettingsTab(selected) {
+        for (const tab of settingsTabs) {
+            const active = tab === selected;
+            tab.setAttribute('aria-selected', String(active));
+            tab.tabIndex = active ? 0 : -1;
+            document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
+        }
+    }
+    settingsTabs.forEach((tab, index) => {
+        tab.addEventListener('click', () => selectSettingsTab(tab));
+        tab.addEventListener('keydown', event => {
+            let next;
+            if (event.key === 'ArrowRight') next = (index + 1) % settingsTabs.length;
+            else if (event.key === 'ArrowLeft') next = (index - 1 + settingsTabs.length) % settingsTabs.length;
+            else if (event.key === 'Home') next = 0;
+            else if (event.key === 'End') next = settingsTabs.length - 1;
+            else return;
+            event.preventDefault();
+            selectSettingsTab(settingsTabs[next]);
+            settingsTabs[next].focus();
+        });
+    });
+
     // Set up buttons and modals
     const btnAdd = document.getElementById('btn-add');
     const btnSettings = document.getElementById('btn-settings');

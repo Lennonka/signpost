@@ -28,7 +28,7 @@ Startup renders cached snapshots before refreshing from one bookmark-tree read. 
 
 ## JSON export
 
-In Settings, choose **Export to JSON** to download settings, wallpaper, and the current tile layout. Bookmark tiles use URLs rather than browser IDs. See the [format documentation](docs/config.md) and [JSON Schema](docs/config.schema.json).
+In Settings → Backup, choose **Export to JSON** to download settings, wallpaper, and the current tile layout. Bookmark tiles use URLs rather than browser IDs. See the [format documentation](docs/config.md) and [JSON Schema](docs/config.schema.json).
 
 ## Checks
 

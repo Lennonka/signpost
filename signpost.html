@@ -54,7 +54,12 @@
             <button class="btn-close icon-button" title="Close settings" aria-label="Close settings">×</button>
         </div>
 
-        <div class="settings-body">
+        <div class="settings-tabs" role="tablist" aria-label="Settings categories">
+            <button id="settings-tab-configure" role="tab" aria-selected="true" aria-controls="settings-configure" tabindex="0">Configure</button>
+            <button id="settings-tab-backup" role="tab" aria-selected="false" aria-controls="settings-backup" tabindex="-1">Backup</button>
+        </div>
+
+        <div id="settings-configure" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-configure">
             <section class="settings-section">
                 <h4>Desktop</h4>
                 <label class="setting-row color-setting">
@@ -146,11 +151,18 @@
                     <input type="checkbox" id="setting-confirm-remove" />
                 </label>
             </section>
+            <button id="reset-settings" class="danger-action">Reset all to defaults</button>
+        </div>
+
+        <div id="settings-backup" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-backup" hidden>
+            <section class="settings-section">
+                <h4>Export configuration</h4>
+                <p class="settings-description">Save your settings, background image, and tile layout to a JSON file.</p>
+                <button id="export-settings" class="secondary-action">Export to JSON</button>
+            </section>
         </div>
 
         <div class="settings-footer">
-            <button id="export-settings" class="secondary-action">Export to JSON</button>
-            <button id="reset-settings" class="danger-action">Reset to defaults</button>
             <button class="btn-close primary-action">Done</button>
         </div>
     </div>

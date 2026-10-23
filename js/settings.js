@@ -118,6 +118,7 @@ export function createSettings() {
             updateSettings({ desktopBackgroundColor: defaultSettings.desktopBackgroundColor });
         });
         document.getElementById('reset-settings').addEventListener('click', () => {
+            if (!confirm('Reset all settings to defaults and remove the background image? This action is irreversible. Your tile layout will remain in place.')) return;
             clearImage();
             updateSettings(defaultSettings);
         });
