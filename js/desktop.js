@@ -169,6 +169,10 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
     function saveLayout() {
         if (!layoutReady || suppressLayoutSave || grid.isIgnoreChangeCB()) return;
 
+        return layoutWriter.save(getLayout());
+    }
+
+    function getLayout() {
         const layout = grid.getGridItems().map(item => {
             const node = item.gridstackNode;
             return {
@@ -186,7 +190,7 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
         // Keep their stored records until a successful lookup resolves them.
         const visibleIds = new Set(layout.map(tile => String(tile.id)));
         const unresolved = [...unresolvedTiles.values()].filter(tile => !visibleIds.has(String(tile.id)));
-        return layoutWriter.save([...layout, ...unresolved]);
+        return [...layout, ...unresolved];
     }
 
     function canPlaceTileAt(x, y, size) {
@@ -306,6 +310,6 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
     }
 
     bindTileActions({ grid, globalSettings, renderer, saveLayout, addTileToGrid, findChildFolderTilePosition });
-    return { grid, loadInitialLayout, addTileToGrid, saveLayout, importBookmarks,
+    return { grid, getLayout, loadInitialLayout, addTileToGrid, saveLayout, importBookmarks,
         applyTileTransparencyToAllTiles, applyDefaultLinkTextColorToBookmarkTiles };
 }

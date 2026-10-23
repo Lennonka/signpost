@@ -1,3 +1,4 @@
+import { downloadExport } from './js/config.js';
 import { createSettings } from './js/settings.js';
 import { createTileRenderer } from './js/tiles.js';
 import { createDesktop } from './js/desktop.js';
@@ -45,6 +46,14 @@ async function initialize() {
 
     await settings.initialize(desktop);
     await desktop.loadInitialLayout();
+    document.getElementById('export-settings').addEventListener('click', async () => {
+        try {
+            await downloadExport(settings.globalSettings, desktop.getLayout());
+        } catch (error) {
+            console.warn('Could not export Signpost.', error);
+            showBubbleMessage('Could not export Signpost. Please try again.');
+        }
+    });
 }
 
 initialize().catch(error => {

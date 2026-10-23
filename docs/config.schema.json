@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Signpost export v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "exportedAt",
+    "settings",
+    "tiles"
+  ],
+  "properties": {
+    "format": {
+      "const": "signpost"
+    },
+    "version": {
+      "const": 1
+    },
+    "exportedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "openInNewTab",
+        "confirmBeforeRemove",
+        "alwaysShowResizeHandle",
+        "alwaysShowMenuIcon",
+        "desktopBackgroundColor",
+        "defaultTileBackgroundColor",
+        "defaultLinkTextColor",
+        "gridColumns",
+        "desktopTextSize",
+        "tileBackgroundTransparency",
+        "desktopBackgroundImage"
+      ],
+      "properties": {
+        "openInNewTab": {
+          "type": "boolean"
+        },
+        "confirmBeforeRemove": {
+          "type": "boolean"
+        },
+        "alwaysShowResizeHandle": {
+          "type": "boolean"
+        },
+        "alwaysShowMenuIcon": {
+          "type": "boolean"
+        },
+        "desktopBackgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "defaultTileBackgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "defaultLinkTextColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "gridColumns": {
+          "type": "integer",
+          "minimum": 6,
+          "maximum": 36
+        },
+        "desktopTextSize": {
+          "type": "integer",
+          "minimum": 8,
+          "maximum": 24
+        },
+        "tileBackgroundTransparency": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100
+        },
+        "desktopBackgroundImage": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Image data URL, or null when no wallpaper is set."
+        }
+      }
+    },
+    "tiles": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "x",
+          "y",
+          "w",
+          "h",
+          "backgroundColor",
+          "textColor"
+        ],
+        "properties": {
+          "type": {
+            "enum": [
+              "bookmark",
+              "folder"
+            ]
+          },
+          "url": {
+            "type": "string",
+            "minLength": 1
+          },
+          "path": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "x": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "y": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "w": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "h": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "backgroundColor": {
+            "type": "string",
+            "pattern": "^(|#[0-9a-fA-F]{6})$"
+          },
+          "textColor": {
+            "type": "string",
+            "pattern": "^(|#[0-9a-fA-F]{6})$"
+          }
+        },
+        "oneOf": [
+          {
+            "properties": {
+              "type": {
+                "const": "bookmark"
+              }
+            },
+            "required": [
+              "url"
+            ],
+            "not": {
+              "required": [
+                "path"
+              ]
+            }
+          },
+          {
+            "properties": {
+              "type": {
+                "const": "folder"
+              }
+            },
+            "required": [
+              "path"
+            ],
+            "not": {
+              "required": [
+                "url"
+              ]
+            }
+          }
+        ]
+      }
+    }
+  }
+}

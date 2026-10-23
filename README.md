@@ -26,11 +26,16 @@ The background worker owns all writes to `tiles`. Desktop pages send field chang
 
 Startup renders cached snapshots before refreshing from one bookmark-tree read. A failed read retains cached tiles and preserves legacy tile records without snapshots. A successful read removes tiles for bookmarks that no longer exist.
 
+## JSON export
+
+In Settings, choose **Export to JSON** to download settings, wallpaper, and the current tile layout. Bookmark tiles use URLs rather than browser IDs. See the [format documentation](docs/config.md) and [JSON Schema](docs/config.schema.json).
+
 ## Checks
 
 Use Node.js 22 or newer:
 
 ```sh
+node tests/config.test.mjs
 node tests/model.test.mjs
 node tests/layout.test.mjs
 node tests/background.test.mjs
