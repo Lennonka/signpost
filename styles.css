@@ -706,6 +706,7 @@ button:hover {
    margin-bottom: 0;
    min-width: 0;
    height: 3ex;
+   line-height: 3ex;
    white-space: nowrap;
    overflow: hidden;
    text-overflow: ellipsis;
