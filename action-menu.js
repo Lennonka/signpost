@@ -1,3 +1,5 @@
+import { chromeCall } from './js/chrome-api.js';
+
 const addMenuItem = document.getElementById('add-current-site');
 const rateMenuItem = document.getElementById('rate-extension');
 const REVIEWS_URL = 'https://chromewebstore.google.com/detail/signpost-visual-bookmarks/gjcofdjpkgbcaecncclpfofkigeggnif/reviews';
@@ -73,24 +75,13 @@ function openReviewsPage() {
     chrome.tabs.create({ url: REVIEWS_URL });
 }
 
-function getActiveTab() {
-    return new Promise((resolve, reject) => {
-        chrome.tabs.query({ active: true, currentWindow: true }, ([tab]) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(tab);
-        });
-    });
+async function getActiveTab() {
+    const [tab] = await chromeCall(chrome.tabs, 'query', { active: true, currentWindow: true });
+    return tab;
 }
 
 function sendMessage(message) {
-    return new Promise((resolve, reject) => {
-        chrome.runtime.sendMessage(message, (response) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(response);
-        });
-    });
+    return chromeCall(chrome.runtime, 'sendMessage', message);
 }
 
 async function getCachedSignpostState(tabId) {

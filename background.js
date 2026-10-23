@@ -1,12 +1,19 @@
+import { mutateLayout, applyLayoutChanges } from './js/layout-store.js';
+import { createBookmarkSnapshot, normalizeGridColumns } from './js/model.js';
+import { findFirstEmptyTilePosition } from './js/placement.js';
+import { bookmarksSearch, bookmarksGetChildren, bookmarksCreate } from './js/bookmarks.js';
+import { storageGet } from './js/storage.js';
+import { chromeCall } from './js/chrome-api.js';
+
+const tabsGet = id => chromeCall(chrome.tabs, 'get', id);
+const tabsQuery = query => chromeCall(chrome.tabs, 'query', query);
+
 const PAGE_CONTEXT_MENU_ID = 'add-page-to-signpost';
 const LINK_CONTEXT_MENU_ID = 'add-link-to-signpost';
 const ACTION_CONTEXT_MENU_ID = 'add-to-signpost-action';
 const ADD_CONTEXT_MENU_IDS = new Set([PAGE_CONTEXT_MENU_ID, LINK_CONTEXT_MENU_ID, ACTION_CONTEXT_MENU_ID]);
 const SIGNPOST_BOOKMARKS_FOLDER = 'Signpost Bookmarks';
 const BOOKMARKS_BAR_ID = '1';
-const DEFAULT_GRID_COLUMNS = 18;
-const MIN_GRID_COLUMNS = 6;
-const MAX_GRID_COLUMNS = 36;
 const WEB_PAGE_URL_PATTERNS = ['http://*/*', 'https://*/*'];
 const ACTIVE_TAB_SIGNPOST_STATE_KEY = 'activeTabSignpostState';
 
@@ -73,6 +80,13 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 });
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+    if (message?.type === 'update-signpost-layout') {
+        applyLayoutChanges(message)
+            .then(() => sendResponse({ ok: true }))
+            .catch(error => sendResponse({ ok: false, error: error.message || String(error) }));
+        return true;
+    }
+
     if (message?.type === 'get-active-tab-signpost-state') {
         getCachedActiveTabSignpostState(message.tabId)
             .then((state) => sendResponse({ ok: true, state }))
@@ -261,160 +275,24 @@ async function getOrCreateBookmark(site) {
 }
 
 async function addBookmarkTile(bookmark) {
-    const data = await storageGet({
-        tiles: [],
-        globalSettings: {}
-    });
-    const tiles = Array.isArray(data.tiles) ? data.tiles : [];
-    const bookmarkId = String(bookmark.id);
-
-    if (tiles.some((tile) => String(tile.id) === bookmarkId)) {
-        return { added: false };
-    }
-
-    const columns = normalizeGridColumns(data.globalSettings?.gridColumns);
-    const position = findFirstEmptyTilePosition({ w: 1, h: 1 }, tiles, columns);
-    const tile = {
-        ...position,
-        id: bookmarkId,
-        backgroundColor: '',
-        textColor: '',
-        bookmarkSnapshot: createBookmarkSnapshot(bookmark)
-    };
-
-    await storageSet({
-        tiles: [...tiles, tile],
-        setupComplete: true
-    });
-
-    return { added: true };
-}
-
-function createBookmarkSnapshot(bookmark) {
-    return {
-        id: String(bookmark.id),
-        title: bookmark.title || '',
-        url: bookmark.url || '',
-        isFolder: !bookmark.url,
-        children: []
-    };
-}
-
-function normalizeGridColumns(value) {
-    const columns = Number.parseInt(value, 10);
-    if (!Number.isFinite(columns)) return DEFAULT_GRID_COLUMNS;
-    return Math.min(MAX_GRID_COLUMNS, Math.max(MIN_GRID_COLUMNS, columns));
-}
-
-function findFirstEmptyTilePosition(size, tiles, gridWidth) {
-    const lastPossibleX = gridWidth - size.w;
-    const maxRowsToSearch = Math.max(100, getGridRow(tiles) + 100);
-
-    for (let y = 0; y < maxRowsToSearch; y++) {
-        for (let x = 0; x <= lastPossibleX; x++) {
-            if (isAreaEmpty(x, y, size, tiles)) {
-                return { x, y, w: size.w, h: size.h };
-            }
+    return mutateLayout((tiles, globalSettings) => {
+        const bookmarkId = String(bookmark.id);
+        if (tiles.some(tile => String(tile.id) === bookmarkId)) {
+            return { value: { added: false } };
         }
-    }
-
-    return { x: 0, y: getGridRow(tiles), w: size.w, h: size.h };
-}
-
-function getGridRow(tiles) {
-    return tiles.reduce((row, tile) => {
-        const y = Number(tile.y) || 0;
-        const h = Number(tile.h) || 1;
-        return Math.max(row, y + h);
-    }, 0);
-}
-
-function isAreaEmpty(x, y, size, tiles) {
-    return !tiles.some((tile) => areasIntersect(
-        { x, y, w: size.w, h: size.h },
-        {
-            x: Number(tile.x) || 0,
-            y: Number(tile.y) || 0,
-            w: Number(tile.w) || 1,
-            h: Number(tile.h) || 1
-        }
-    ));
-}
-
-function areasIntersect(a, b) {
-    return a.x < b.x + b.w &&
-        a.x + a.w > b.x &&
-        a.y < b.y + b.h &&
-        a.y + a.h > b.y;
-}
-
-function bookmarksSearch(query) {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.search(query, (results) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(results || []);
-        });
-    });
-}
-
-function bookmarksGetChildren(id) {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.getChildren(id, (children) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(children || []);
-        });
-    });
-}
-
-function bookmarksCreate(bookmark) {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.create(bookmark, (created) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(created);
-        });
-    });
-}
-
-function storageGet(defaults) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.get(defaults, (data) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(data);
-        });
-    });
-}
-
-function storageSet(data) {
-    return new Promise((resolve, reject) => {
-        chrome.storage.local.set(data, () => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve();
-        });
-    });
-}
-
-function tabsGet(tabId) {
-    return new Promise((resolve, reject) => {
-        chrome.tabs.get(tabId, (tab) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(tab);
-        });
-    });
-}
-
-function tabsQuery(queryInfo) {
-    return new Promise((resolve, reject) => {
-        chrome.tabs.query(queryInfo, (tabs) => {
-            const err = chrome.runtime.lastError;
-            if (err) reject(new Error(err.message));
-            else resolve(tabs || []);
-        });
+        const columns = normalizeGridColumns(globalSettings?.gridColumns);
+        const position = findFirstEmptyTilePosition({ w: 1, h: 1 }, tiles, columns);
+        const tile = {
+            ...position,
+            id: bookmarkId,
+            backgroundColor: '',
+            textColor: '',
+            bookmarkSnapshot: createBookmarkSnapshot(bookmark)
+        };
+        return {
+            data: { tiles: [...tiles, tile], setupComplete: true },
+            value: { added: true }
+        };
     });
 }
 
