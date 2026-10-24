@@ -155,6 +155,42 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').textColor`), '#abcdef');
     assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile').style.backgroundColor`), 'rgba(18, 52, 86, 0.5)');
 
+    // Tile pickers replace the menu and retain live updates and keyboard dismissal.
+    await browser.evaluate(`document.querySelector('[gs-id="10"] .tile-menu-icon').click(); fixture.menuRect = document.querySelector('[gs-id="10"] .tile-menu').getBoundingClientRect().toJSON(); document.querySelector('[gs-id="10"] .set-bg-color').click();`);
+    assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile-menu').classList.contains('hidden')`), true);
+    assert.equal(await browser.evaluate(`Math.abs(document.querySelector('.color-picker').getBoundingClientRect().left - fixture.menuRect.left) < 1`), true);
+    // Clicking and dragging the gradient updates the color; changing hue preserves its selection.
+    await browser.evaluate(`document.querySelector('.color-picker-hue').value = '0'; document.querySelector('.color-picker-hue').dispatchEvent(new Event('input'));`);
+    const square = await browser.evaluate(`document.querySelector('.color-picker-square').getBoundingClientRect().toJSON()`);
+    await browser.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: square.right - 1, y: square.top + 1, button: 'left', clickCount: 1 });
+    await browser.call('Input.dispatchMouseEvent', { type: 'mouseMoved', x: square.right, y: square.top, button: 'left', buttons: 1 });
+    await browser.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: square.right, y: square.top, button: 'left', clickCount: 1 });
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker-hex').value`), '#ff0000');
+    await browser.evaluate(`document.querySelector('.color-picker-hue').value = '120'; document.querySelector('.color-picker-hue').dispatchEvent(new Event('input'));`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker-hex').value`), '#00ff00');
+    await browser.evaluate(`document.querySelector('.color-picker-square').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker-hex').value`), '#00fc00');
+    await browser.evaluate(`const hex = document.querySelector('.color-picker-hex'); hex.value = '#234567'; hex.dispatchEvent(new Event('input'));`);
+    await until(browser, `fixture.data.tiles.find(tile => tile.id === '10').backgroundColor === '#234567'`);
+    await browser.evaluate(`document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker')`), null);
+    await until(browser, `document.activeElement.classList.contains('tile-menu-icon')`);
+    // Restore the fixture color used by later assertions.
+    await browser.evaluate(`document.querySelector('[gs-id="10"] .tile-menu-icon').click(); document.querySelector('[gs-id="10"] .set-bg-color').click(); { const hex = document.querySelector('.color-picker-hex'); hex.value = '#123456'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    await until(browser, `fixture.data.tiles.find(tile => tile.id === '10').backgroundColor === '#123456'`);
+
+    // Settings picker opens left of the swatch and fits after viewport resizing.
+    await browser.evaluate(`document.getElementById('btn-settings').click(); document.getElementById('setting-background-color').click();`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker').getBoundingClientRect().right <= document.getElementById('setting-background-color').getBoundingClientRect().left - 7`), true);
+    await browser.call('Emulation.setDeviceMetricsOverride', { width: 320, height: 240, deviceScaleFactor: 1, mobile: false });
+    await until(browser, `(() => { const r = document.querySelector('.color-picker').getBoundingClientRect(); return r.left >= 8 && r.top >= 8 && r.right <= innerWidth - 8 && r.bottom <= innerHeight - 8; })()`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker').scrollHeight <= document.querySelector('.color-picker').clientHeight`), true);
+    await browser.call('Emulation.clearDeviceMetricsOverride');
+    await browser.call('Input.dispatchMouseEvent', { type: 'mousePressed', x: 2, y: 2, button: 'left', clickCount: 1 });
+    await browser.call('Input.dispatchMouseEvent', { type: 'mouseReleased', x: 2, y: 2, button: 'left', clickCount: 1 });
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker')`), null);
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click();`);
+
     // Settings tabs switch visible actions and support keyboard navigation.
     await browser.evaluate(`document.getElementById('btn-settings').click()`);
     assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), true);

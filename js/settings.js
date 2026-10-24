@@ -1,3 +1,4 @@
+import { openColorPicker } from './color-picker.js';
 import { defaultSettings, normalizeDesktopTextSize, normalizeGridColumns } from './model.js';
 import { storageGet, persist, storageRemove, reportStorageError } from './storage.js';
 import { applyDesktopBackgroundImage, cacheDesktopBackgroundImage,
@@ -37,6 +38,11 @@ export function createSettings() {
     function renderSettingsControls() {
         for (const [key, [, , property]] of Object.entries(controls)) {
             elements[key][property] = globalSettings[key];
+            if (elements[key].classList.contains('color-swatch')) {
+                elements[key].style.backgroundColor = globalSettings[key];
+                const name = elements[key].closest('label').querySelector('strong').textContent;
+                elements[key].setAttribute('aria-label', `${name}: ${globalSettings[key]}`);
+            }
         }
         document.getElementById('setting-desktop-text-size-value').textContent = globalSettings.desktopTextSize;
         document.getElementById('setting-grid-columns-value').textContent = globalSettings.gridColumns;
@@ -91,6 +97,18 @@ export function createSettings() {
         applySettings(Object.keys(controls));
 
         for (const [key, [, event, property]] of Object.entries(controls)) {
+            if (elements[key].classList.contains('color-swatch')) {
+                elements[key].addEventListener('click', () => openColorPicker({
+                    trigger: elements[key],
+                    getAnchorRect: () => elements[key].getBoundingClientRect(),
+                    placement: 'left',
+                    label: elements[key].closest('label').querySelector('strong').textContent,
+                    initialColor: globalSettings[key],
+                    onChange: color => updateSettings({ [key]: color }, { defer: true }),
+                    onCommit: saveSettings
+                }));
+                continue;
+            }
             elements[key].addEventListener(event, () => updateSettings({
                 [key]: key === 'tileBackgroundTransparency' ? Number(elements[key][property]) : elements[key][property]
             }, { defer: event === 'input' }));

@@ -104,7 +104,7 @@ export function createTileRenderer(globalSettings) {
         tileHeaderHTML = `
             <div class="tile-header">
                 <div class="folder-title">${tileHeaderTitleText}</div>
-                <div class="tile-menu-icon">⁝
+                <div class="tile-menu-icon" tabindex="0">⁝
                     <div class="tile-menu hidden">
                         <div class="tile-menu-item remove-tile">Remove</div>
                         <div class="tile-menu-item set-bg-color">Set background color</div>
