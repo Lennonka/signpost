@@ -1,6 +1,6 @@
 {
   "name": "Signpost: Bookmark Desktop for New Tab",
-  "description": "Turn your new tab into a visual bookmark desktop. Quickly save pages; drag & resize tiles; customize colors, opacity & wallpapers.",
+  "description": "Turn your new tab into a visual bookmark desktop. Quickly save pages. Drag & resize tiles. Customize colors, opacity & wallpapers.",
   "version": "4.0",
   "manifest_version": 3,
   "chrome_url_overrides": {
