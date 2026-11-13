@@ -957,3 +957,85 @@ body.always-show-menu-icon .tile-menu-icon {
 @media (max-height: 340px) {
    .color-picker-square { height: clamp(32px, calc(100dvh - 155px), 120px); margin-top: 4px; }
 }
+
+/* First-run setup and the intentionally empty desktop. */
+.onboarding {
+   width: min(520px, calc(100vw - 32px));
+   max-height: calc(100vh - 32px);
+   box-sizing: border-box;
+   padding: 28px;
+   background: #fbfaf7;
+   color: #2d2b27;
+   border: 1px solid rgba(45, 43, 39, 0.12);
+   border-radius: 16px;
+}
+
+.onboarding h2 { margin: 8px 0 12px; font-size: 26px; }
+.onboarding p { line-height: 1.5; }
+.onboarding-eyebrow { margin: 0; color: #2f735f; font-weight: bold; }
+.onboarding-options { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; }
+.onboarding .onboarding-option {
+   display: flex;
+   flex-direction: column;
+   gap: 5px;
+   width: 100%;
+   margin: 0;
+   padding: 14px 16px;
+   text-align: left;
+   border: 1px solid rgba(45, 43, 39, 0.18);
+   border-radius: 10px;
+   background: #fff;
+   color: #2d2b27;
+   box-sizing: border-box;
+}
+.onboarding-option strong { font-size: 15px; }
+.onboarding-option span { font-size: 13px; line-height: 1.4; }
+.onboarding .onboarding-option:hover { background: #f0f2ed; }
+.onboarding .primary-action { background: #2f735f; color: #fff; border-color: #285f50; }
+.onboarding .primary-action:hover { background: #285f50; }
+.onboarding .onboarding-blank { background: transparent; }
+.onboarding-option:disabled { opacity: 0.6; cursor: default; }
+.onboarding-note { font-size: 12px; color: #64615b; margin-bottom: 0; }
+#setup-status { color: #943b27; margin-bottom: 0; }
+#setup-status:empty { display: none; }
+.onboarding button:focus-visible,
+.desktop-empty button:focus-visible,
+.onboarding-hint button:focus-visible { outline: 3px solid #b88b36; outline-offset: 3px; }
+.desktop-empty {
+   position: absolute;
+   top: 30vh;
+   left: 16px;
+   right: 86px;
+   max-width: 440px;
+   margin: 0 auto;
+   padding: 20px;
+   box-sizing: border-box;
+   border-radius: 16px;
+   background: #fbfaf7;
+   color: #2d2b27;
+   text-align: center;
+}
+.desktop-empty h2 { font-size: 24px; }
+.desktop-empty button { padding: 12px 18px; border-radius: 8px; }
+.onboarding-hint {
+   position: fixed;
+   bottom: 20px;
+   left: 20px;
+   right: 90px;
+   max-width: 520px;
+   padding: 14px 18px;
+   box-sizing: border-box;
+   background: #fbfaf7;
+   color: #2d2b27;
+   border: 1px solid rgba(45, 43, 39, 0.16);
+   border-radius: 12px;
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.12);
+   z-index: 10;
+}
+.onboarding-hint p { margin: 0 0 10px; line-height: 1.5; }
+.onboarding-hint button { padding: 6px 12px; }
+@media (max-width: 480px) {
+   .onboarding { padding: 20px; }
+   .onboarding h2 { font-size: 22px; }
+   .onboarding-hint { left: 12px; right: 82px; bottom: 12px; }
+}

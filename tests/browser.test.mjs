@@ -306,7 +306,7 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
 
     // Failed refresh must preserve both cached and legacy tiles without snapshots.
     await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: injection.identifier });
-    await browser.call('Page.addScriptToEvaluateOnNewDocument', { source: mock + `fixture.data.globalSettings.defaultFolderTitleColor = '#345678'; fixture.data.globalSettings.desktopBackgroundColor = '#123456'; fixture.data.globalSettings.desktopBackgroundTransparency = 75; fixture.data.desktopBackgroundImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; fixture.failBookmarks = true; fixture.data.tiles.push({ id: 'legacy', x: 4, y: 0, w: 1, h: 1 });` });
+    const failedInjection = await browser.call('Page.addScriptToEvaluateOnNewDocument', { source: mock + `fixture.data.globalSettings.defaultFolderTitleColor = '#345678'; fixture.data.globalSettings.desktopBackgroundColor = '#123456'; fixture.data.globalSettings.desktopBackgroundTransparency = 75; fixture.data.desktopBackgroundImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; fixture.failBookmarks = true; fixture.data.tiles.push({ id: 'legacy', x: 4, y: 0, w: 1, h: 1 });` });
     await browser.call('Page.navigate', { url });
     await until(browser, `document.querySelector('.bookmark-title')?.textContent === 'Cached title'`);
     await browser.evaluate(`document.getElementById('setting-grid-columns').value = '18'; document.getElementById('setting-grid-columns').dispatchEvent(new Event('input'));`);
@@ -321,5 +321,86 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     await browser.evaluate(`document.querySelector('[gs-id="10"] .remove-tile').click()`);
     await until(browser, `!fixture.data.tiles.some(tile => tile.id === '10')`);
     assert.ok(await browser.evaluate(`fixture.data.tiles.some(tile => tile.id === 'legacy')`));
+    assert.deepEqual(browser.errors, []);
+
+    // First-run choices, cancellations, and intentionally empty desktops.
+    await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: failedInjection.identifier });
+    let onboardingInjection;
+    let navigation = 0;
+    async function openFresh(extra = '') {
+        if (onboardingInjection) await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: onboardingInjection.identifier });
+        navigation += 1;
+        onboardingInjection = await browser.call('Page.addScriptToEvaluateOnNewDocument', {
+            source: mock + `fixture.data.tiles = []; fixture.data.setupComplete = false; fixture.navigation = ${navigation};` + extra
+        });
+        await browser.call('Page.navigate', { url });
+        await until(browser, `window.fixture?.navigation === ${navigation} && document.getElementById('setup-prompt') && (!document.getElementById('setup-prompt').classList.contains('hidden') || !document.getElementById('desktop-empty').classList.contains('hidden') || document.querySelectorAll('.grid-stack-item').length > 0)`);
+    }
+    await openFresh();
+    await until(browser, `!document.getElementById('load-bookmarks').disabled`);
+    assert.deepEqual(await browser.evaluate(`Array.from(document.querySelectorAll('.onboarding-options button strong'), node => node.textContent)`),
+        ['Use my Bookmarks Bar', 'Choose bookmarks and folders', 'Restore a Signpost backup', 'Start from blank desktop']);
+    assert.match(await browser.evaluate(`document.getElementById('setup-bookmark-count').textContent`), /1 bookmark and 1 folder/);
+    await browser.call('Emulation.setDeviceMetricsOverride', { width: 320, height: 568, deviceScaleFactor: 1, mobile: false });
+    assert.equal(await browser.evaluate(`(() => { const r = document.getElementById('setup-prompt').getBoundingClientRect(); return r.left >= 0 && r.right <= innerWidth && r.top >= 0 && r.bottom <= innerHeight; })()`), true);
+    await browser.call('Emulation.clearDeviceMetricsOverride');
+    await browser.evaluate(`document.getElementById('start-empty').click()`);
+    await until(browser, `fixture.data.setupComplete === true && !document.getElementById('desktop-empty').classList.contains('hidden')`);
+    assert.equal(await browser.evaluate(`document.getElementById('onboarding-hint').classList.contains('hidden')`), false);
+    const blankState = await browser.evaluate(`JSON.stringify(fixture.data)`);
+    await openFresh(`Object.assign(fixture.data, ${blankState});`);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('onboarding-hint').classList.contains('hidden')`), false);
+    await browser.evaluate(`document.getElementById('dismiss-onboarding-hint').click()`);
+    await until(browser, `fixture.data.onboardingHintDismissed === true`);
+    const dismissedState = await browser.evaluate(`JSON.stringify(fixture.data)`);
+    await openFresh(`Object.assign(fixture.data, ${dismissedState});`);
+    assert.equal(await browser.evaluate(`document.getElementById('onboarding-hint').classList.contains('hidden')`), true);
+    await browser.evaluate(`document.getElementById('empty-add-bookmark').click()`);
+    await until(browser, `document.querySelectorAll('.bookmark-tree-item').length === 5`);
+    await browser.evaluate(`document.querySelector('.bookmark-link-select').click()`);
+    await until(browser, `document.getElementById('desktop-empty').classList.contains('hidden')`);
+
+    await openFresh();
+    await browser.evaluate(`document.getElementById('choose-bookmarks').click()`);
+    await until(browser, `document.querySelectorAll('.bookmark-tree-item').length === 5`);
+    await browser.evaluate(`document.querySelector('#bookmark-picker .btn-close').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), false);
+    assert.equal(await browser.evaluate(`fixture.data.setupComplete`), false);
+    await browser.evaluate(`document.getElementById('choose-bookmarks').click()`);
+    await until(browser, `document.querySelector('.bookmark-link-select') !== null`);
+    await browser.evaluate(`document.querySelector('.bookmark-link-select').click()`);
+    await until(browser, `fixture.data.setupComplete === true`);
+    assert.equal(await browser.evaluate(`fixture.data.tiles.length`), 1);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), true);
+
+    await openFresh();
+    await until(browser, `!document.getElementById('load-bookmarks').disabled`);
+    await browser.evaluate(`document.getElementById('load-bookmarks').click()`);
+    await until(browser, `fixture.data.setupComplete === true`);
+    assert.equal(await browser.evaluate(`fixture.data.tiles.length`), 2);
+    assert.equal(await browser.evaluate(`fixture.data.tiles.some(tile => tile.id === '30')`), false);
+
+    await openFresh(`fixture.tree[0].children[0].children = [];`);
+    await until(browser, `document.getElementById('setup-bookmark-count').textContent.includes('empty')`);
+    assert.equal(await browser.evaluate(`document.getElementById('load-bookmarks').disabled`), true);
+    assert.equal(await browser.evaluate(`document.getElementById('start-empty').disabled`), false);
+    await browser.evaluate(`document.getElementById('restore-backup').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), false);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), true);
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), false);
+
+    await openFresh(`chrome.bookmarks.getSubTree = (id, callback) => { chrome.runtime.lastError = { message: 'Unavailable' }; callback(); delete chrome.runtime.lastError; };`);
+    await until(browser, `document.getElementById('setup-bookmark-count').textContent.includes('unavailable')`);
+    assert.equal(await browser.evaluate(`document.getElementById('load-bookmarks').disabled`), true);
+    await browser.evaluate(`document.getElementById('start-empty').click()`);
+    await until(browser, `fixture.data.setupComplete === true`);
+    await openFresh(`chrome.storage.local.set = (data, callback) => { chrome.runtime.lastError = { message: 'Storage full' }; callback(); delete chrome.runtime.lastError; };`);
+    await browser.evaluate(`document.getElementById('start-empty').click()`);
+    await until(browser, `document.getElementById('setup-status').textContent.includes('Storage full')`);
+    assert.equal(await browser.evaluate(`fixture.data.setupComplete`), false);
+    assert.equal(await browser.evaluate(`document.getElementById('setup-prompt').classList.contains('hidden')`), false);
+    assert.equal(await browser.evaluate(`document.getElementById('start-empty').disabled`), false);
     assert.deepEqual(browser.errors, []);
 });

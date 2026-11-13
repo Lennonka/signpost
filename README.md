@@ -2,9 +2,16 @@
 
 A Chrome extension that turns the new tab page into a bookmark desktop. Load this directory as an unpacked extension through Chrome's extension developer mode. There is no build step or runtime framework.
 
+## Getting started
+
+On your first new tab, choose **Use my Bookmarks Bar**, **Choose bookmarks and folders**, **Restore a Signpost backup**, or **Start from blank desktop**, in that order. The Bookmarks Bar option previews the number of top-level bookmark and folder tiles; folder contents stay grouped. Browser bookmarks remain unchanged. An empty or unavailable Bookmarks Bar leaves the other options available.
+
+Choosing bookmarks opens the existing picker; restoring opens Settings → Backup and the JSON file chooser. Cancelling either path lets you return to the welcome screen. After setup, a dismissible tip explains arranging tiles and using the Add bookmark or folder button and Settings. A blank desktop stays blank after reload and offers an Add button instead of repeating onboarding.
+
 ## Code structure
 
-- `signpost.js` wires together startup, initial setup, and the desktop UI.
+- `signpost.js` wires together startup and the desktop UI.
+- `js/onboarding.js` owns the welcome choices, setup completion, empty state, and dismissible getting-started tip.
 - `js/desktop.js` owns GridStack, tile geometry, cached layout rendering, and bookmark refresh.
 - `js/tiles.js` renders bookmarks and folders and applies their appearance.
 - `js/tile-actions.js` delegates desktop interactions and owns the active menu and color picker.

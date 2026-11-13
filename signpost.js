@@ -5,46 +5,31 @@ import { createSettings } from './js/settings.js';
 import { createTileRenderer } from './js/tiles.js';
 import { createDesktop } from './js/desktop.js';
 import { createBookmarkPicker } from './js/bookmark-picker.js';
-import { bindToolbar, openModal, closeModal, showBubbleMessage } from './js/ui.js';
+import { bindToolbar, showBubbleMessage } from './js/ui.js';
 import { restoreCachedBackground } from './js/background-image.js';
-import { bookmarksGetSubTree } from './js/bookmarks.js';
-import { persist } from './js/storage.js';
+import { createOnboarding } from './js/onboarding.js';
 
 async function initialize() {
     restoreCachedBackground();
     const settings = createSettings();
-    const setupModal = document.getElementById('setup-prompt');
+    let onboarding;
     const desktop = createDesktop({
         globalSettings: settings.globalSettings,
         renderer: createTileRenderer(settings.globalSettings),
         showBubbleMessage,
-        onExternalTilesAdded: () => closeModal(setupModal),
-        handleEmpty(setupComplete) {
-            if (setupComplete) persist({ setupComplete: false });
-            openModal(setupModal);
-        }
+        onExternalTilesAdded: () => onboarding.complete().catch(error => showBubbleMessage(error.message)),
+        handleEmpty: setupComplete => onboarding.handleEmpty(setupComplete)
     });
-    const picker = createBookmarkPicker({ addTileToGrid: desktop.addTileToGrid, showBubbleMessage });
+    const picker = createBookmarkPicker({
+        addTileToGrid(bookmark) {
+            desktop.addTileToGrid(bookmark);
+            onboarding.complete().catch(error => showBubbleMessage(error.message));
+        },
+        showBubbleMessage
+    });
     bindToolbar(picker);
-
-    document.getElementById('load-bookmarks').addEventListener('click', async () => {
-        try {
-            const [bar] = await bookmarksGetSubTree('1');
-            if (!bar) throw new Error('Bookmarks Bar is unavailable.');
-            desktop.importBookmarks(bar.children || []);
-            await persist({ setupComplete: true });
-            closeModal(setupModal);
-            showBubbleMessage('Imported from Bookmarks Bar');
-        } catch (error) {
-            console.warn('Could not import Bookmarks Bar.', error);
-            alert('Could not access Bookmarks Bar.');
-        }
-    });
-    document.getElementById('start-empty').addEventListener('click', () => {
-        persist({ setupComplete: true });
-        closeModal(setupModal);
-        showBubbleMessage('Start with an empty desktop');
-    });
+    onboarding = createOnboarding(desktop);
+    await onboarding.initialize();
 
     await settings.initialize(desktop);
     await desktop.loadInitialLayout();
@@ -61,6 +46,7 @@ async function initialize() {
             if (!confirm('Replace your settings, background image, and tile layout with this backup? This action is irreversible. Your browser bookmarks will remain unchanged.')) return;
             await settings.flush();
             await desktop.saveLayout();
+            await onboarding.prepareRestore();
             const response = await chromeCall(chrome.runtime, 'sendMessage', { type: 'import-signpost-config', config });
             if (!response?.ok) throw new Error(response?.error || 'Could not save the imported configuration.');
         } catch (error) {
