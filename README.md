@@ -8,6 +8,12 @@ On your first new tab, choose **Use my Bookmarks Bar**, **Choose bookmarks and f
 
 Choosing bookmarks opens the existing picker; restoring opens Settings → Backup and the JSON file chooser. Cancelling either path lets you return to the welcome screen. After setup, a dismissible tip explains arranging tiles and using the Add bookmark or folder button and Settings. A blank desktop stays blank after reload and offers an Add button instead of repeating onboarding.
 
+## Distribution package
+
+Run `sh scripts/package.sh` from the repository root, or invoke the script by its absolute path from any working directory. It requires a POSIX shell and the `zip` utility; Node.js is not required for packaging. It recreates the git-ignored `dist/` directory and writes `dist/signpost.zip`, containing the manifest, desktop and popup files, service worker, JavaScript modules, GridStack, and icons. Development files, tests, and documentation are excluded. Existing contents of `dist/` are removed on each run.
+
+The ZIP is ready for store submission, with `manifest.json` at its root. Extract it into a separate directory to check it as an unpacked extension. Packaging archives source files without compiling or modifying them; developing directly from the repository still requires no build step.
+
 ## Code structure
 
 - `signpost.js` wires together startup and the desktop UI.

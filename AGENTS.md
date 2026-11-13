@@ -10,6 +10,7 @@ Signpost is a Chrome Manifest V3 extension that replaces the new tab page with a
 - `gridstack/` contains the vendored GridStack library. Avoid editing vendored files unless the task requires it.
 - `docs/` documents the configuration backup format and its JSON Schema.
 - `tests/` contains Node.js checks and a browser integration check.
+- `scripts/package.sh` archives runtime files into git-ignored `dist/signpost.zip` using the `zip` utility. Keep its allowlist aligned with extension assets; run `sh scripts/package.sh` after packaging changes.
 
 ## Implementation conventions
 
