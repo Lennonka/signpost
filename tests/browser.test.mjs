@@ -222,6 +222,31 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
         assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), color);
         await until(browser, `fixture.data.globalSettings.desktopBackgroundTransparency === ${transparency}`);
     }
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-end-row').hidden`), true);
+    // Each direction is selectable; the overlay stays above the image with one shared alpha.
+    const directions = ['to top', 'to top right', 'to right', 'to bottom right', 'to bottom', 'to bottom left', 'to left', 'to top left'];
+    for (const direction of directions) {
+        await browser.evaluate(`document.getElementById('setting-overlay-mode').click(); document.querySelector('[data-direction="${direction}"]').click()`);
+        await until(browser, `fixture.data.globalSettings.desktopBackgroundDirection === '${direction}' && fixture.data.globalSettings.desktopBackgroundOverlay === 'gradient'`);
+        assert.match(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), new RegExp('linear-gradient\\(' + (direction === 'to bottom' ? 'rgba' : direction.replace(/to (top|bottom) (left|right)/, 'to $2 $1'))));
+        assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(0, 0, 0, 0)');
+    }
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-end-row').hidden`), false);
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-start-label').textContent`), 'Start color');
+    await browser.evaluate(`document.getElementById('setting-background-end-color').click(); { const hex = document.querySelector('.color-picker-hex'); hex.value = '#fedcba'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    await until(browser, `fixture.data.globalSettings.desktopBackgroundEndColor === '#fedcba'`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'linear-gradient(to left top, rgba(18, 52, 86, 0.25), rgba(254, 220, 186, 0.25))');
+    await browser.evaluate(`document.getElementById('setting-overlay-mode').click(); document.querySelector('[data-overlay-mode="solid"]').click()`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'none');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(18, 52, 86, 0.25)');
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-end-row').hidden`), true);
+    await browser.evaluate(`document.getElementById('setting-overlay-mode').click(); document.querySelector('[data-direction="to top left"]').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('setting-background-end-color').value`), '#fedcba');
+    await browser.evaluate(`{ const input = document.getElementById('setting-background-transparency'); input.value = '100'; input.dispatchEvent(new Event('input')); }`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'linear-gradient(to left top, rgba(18, 52, 86, 0), rgba(254, 220, 186, 0))');
+    assert.match(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), /data:image/);
+    await browser.evaluate(`document.getElementById('setting-overlay-mode').click(); document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-options').hidden`), true);
     await browser.evaluate(`document.getElementById('clear-background').click()`);
     await until(browser, `!fixture.data.desktopBackgroundImage && fixture.data.globalSettings.desktopBackgroundTransparency === 50`);
     assert.equal(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), 'none');
@@ -347,6 +372,9 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
         await browser.call('Page.navigate', { url });
         await until(browser, `window.fixture?.navigation === ${navigation} && document.getElementById('setup-prompt') && (!document.getElementById('setup-prompt').classList.contains('hidden') || !document.getElementById('desktop-empty').classList.contains('hidden') || document.querySelectorAll('.grid-stack-item').length > 0)`);
     }
+    await openFresh(`fixture.data.setupComplete = true; Object.assign(fixture.data.globalSettings, { desktopBackgroundOverlay: 'gradient', desktopBackgroundDirection: 'to right', desktopBackgroundColor: '#123456', desktopBackgroundEndColor: '#fedcba', desktopBackgroundTransparency: 75 });`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'linear-gradient(to right, rgba(18, 52, 86, 0.25), rgba(254, 220, 186, 0.25))');
+    assert.equal(await browser.evaluate(`document.getElementById('overlay-end-row').hidden`), false);
     await openFresh();
     await until(browser, `!document.getElementById('load-bookmarks').disabled`);
     assert.deepEqual(await browser.evaluate(`Array.from(document.querySelectorAll('.onboarding-options button strong'), node => node.textContent)`),

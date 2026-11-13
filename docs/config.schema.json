@@ -96,6 +96,33 @@
             "null"
           ],
           "description": "Image data URL, or null when no wallpaper is set."
+        },
+        "desktopBackgroundOverlay": {
+          "enum": [
+            "solid",
+            "gradient"
+          ],
+          "default": "solid",
+          "description": "Overlay mode; optional for older backups."
+        },
+        "desktopBackgroundDirection": {
+          "enum": [
+            "to top",
+            "to top right",
+            "to right",
+            "to bottom right",
+            "to bottom",
+            "to bottom left",
+            "to left",
+            "to top left"
+          ],
+          "default": "to bottom",
+          "description": "Direction from start color toward end color. Retained in solid mode."
+        },
+        "desktopBackgroundEndColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "description": "Gradient end color; defaults to black for light start colors and white for dark start colors when omitted."
         }
       }
     },

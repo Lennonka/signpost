@@ -1047,3 +1047,44 @@ body.always-show-menu-icon .tile-menu-icon {
    .onboarding h2 { font-size: 22px; }
    .onboarding-hint { left: 12px; right: 82px; bottom: 12px; }
 }
+
+.overlay-mode-setting {
+   position: relative;
+   flex-wrap: wrap;
+}
+#settings-panel #setting-overlay-mode {
+   padding: 8px 10px;
+   border: 1px solid rgba(45, 43, 39, 0.18);
+   border-radius: 6px;
+   background: #fff;
+   color: #242424;
+   text-align: left;
+   max-width: 100%;
+   white-space: normal;
+}
+.overlay-options {
+   position: absolute;
+   top: 100%;
+   right: 0;
+   width: 190px;
+   padding: 10px;
+   box-sizing: border-box;
+   border: 1px solid rgba(45, 43, 39, 0.18);
+   border-radius: 10px;
+   background: #fff;
+   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.16);
+   z-index: 2;
+}
+#settings-panel .overlay-options button {
+   padding: 10px;
+   border: 1px solid transparent;
+   border-radius: 6px;
+   background: #f5f4f0;
+   color: #242424;
+}
+.overlay-directions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+#settings-panel .overlay-directions button { font-size: 22px; }
+#settings-panel .overlay-directions [data-overlay-mode="solid"] { font-size: 13px; padding: 10px 4px; }
+#settings-panel .overlay-options button[aria-pressed="true"] { background: #e0eee7; border-color: #2f735f; }
+.overlay-options button:focus-visible,
+#setting-overlay-mode:focus-visible { outline: 2px solid #2f735f; outline-offset: 2px; }

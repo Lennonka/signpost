@@ -71,13 +71,34 @@
                     </span>
                     <input type="file" id="setting-background-image" accept="image/*" />
                 </label>
+                <div class="setting-row overlay-mode-setting">
+                    <span><strong>Background overlay</strong><small>Choose a solid color or a gradient direction.</small></span>
+                    <button type="button" id="setting-overlay-mode" aria-expanded="false" aria-controls="overlay-options">Solid color</button>
+                    <div id="overlay-options" class="overlay-options" role="group" aria-label="Overlay style and direction" hidden>
+                        <div class="overlay-directions">
+                            <button type="button" data-direction="to top left" title="Bottom right to top left" aria-label="Bottom right to top left" aria-pressed="false">↖</button>
+                            <button type="button" data-direction="to top" title="Bottom to top" aria-label="Bottom to top" aria-pressed="false">↑</button>
+                            <button type="button" data-direction="to top right" title="Bottom left to top right" aria-label="Bottom left to top right" aria-pressed="false">↗</button>
+                            <button type="button" data-direction="to left" title="Right to left" aria-label="Right to left" aria-pressed="false">←</button>
+                            <button type="button" data-overlay-mode="solid" title="Solid color" aria-label="Solid color" aria-pressed="true">Solid</button>
+                            <button type="button" data-direction="to right" title="Left to right" aria-label="Left to right" aria-pressed="false">→</button>
+                            <button type="button" data-direction="to bottom left" title="Top right to bottom left" aria-label="Top right to bottom left" aria-pressed="false">↙</button>
+                            <button type="button" data-direction="to bottom" title="Top to bottom" aria-label="Top to bottom" aria-pressed="false">↓</button>
+                            <button type="button" data-direction="to bottom right" title="Top left to bottom right" aria-label="Top left to bottom right" aria-pressed="false">↘</button>
+                        </div>
+                    </div>
+                </div>
                 <label class="setting-row color-setting">
                     <span>
-                        <strong>Background overlay color</strong>
+                        <strong id="overlay-start-label">Background overlay color</strong>
                         <small>Applied above the background image.</small>
                     </span>
                     <button type="button" class="color-swatch" id="setting-background-color" aria-label="Choose color"
                         aria-haspopup="dialog"></button>
+                </label>
+                <label id="overlay-end-row" class="setting-row color-setting" hidden>
+                    <span><strong>End color</strong><small>The gradient blends from start to end.</small></span>
+                    <button type="button" class="color-swatch" id="setting-background-end-color" aria-label="Choose end color" aria-haspopup="dialog"></button>
                 </label>
                 <label class="setting-row range-setting">
                     <span>

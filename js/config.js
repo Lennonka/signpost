@@ -1,3 +1,4 @@
+import { overlayDirections, getDefaultOverlayEndColor } from './background-overlay.js';
 import { bookmarksGetTree } from './bookmarks.js';
 import { storageGet } from './storage.js';
 import { defaultSettings, createBookmarkSnapshot } from './model.js';
@@ -85,14 +86,18 @@ export function validateConfig(config) {
     if (typeof config.exportedAt !== 'string' || !/^\d{4}-\d\d-\d\dT.*(?:Z|[+-]\d\d:\d\d)$/.test(config.exportedAt) ||
         !Number.isFinite(Date.parse(config.exportedAt))) fail('exportedAt', 'an ISO 8601 timestamp such as "2026-10-23T12:00:00.000Z"', config.exportedAt);
     const settingKeys = Object.keys(defaultSettings).filter(key => key !== 'tileSize');
-    keys(config.settings, settingKeys, 'settings', ['desktopBackgroundTransparency', 'defaultFolderTitleColor']);
+    keys(config.settings, settingKeys, 'settings', ['desktopBackgroundTransparency', 'defaultFolderTitleColor', 'desktopBackgroundOverlay', 'desktopBackgroundDirection', 'desktopBackgroundEndColor']);
     const ranges = { gridColumns: [6, 36], desktopTextSize: [8, 24], tileBackgroundTransparency: [0, 100], desktopBackgroundTransparency: [0, 100] };
     const color = value => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
     for (const key of settingKeys) {
-        if (['desktopBackgroundTransparency', 'defaultFolderTitleColor'].includes(key) && !Object.hasOwn(config.settings, key)) continue;
+        if (['desktopBackgroundTransparency', 'defaultFolderTitleColor', 'desktopBackgroundOverlay', 'desktopBackgroundDirection', 'desktopBackgroundEndColor'].includes(key) && !Object.hasOwn(config.settings, key)) continue;
         const value = config.settings[key];
         const path = `settings.${key}`;
-        if (key === 'desktopBackgroundImage') {
+        if (key === 'desktopBackgroundOverlay') {
+            if (!['solid', 'gradient'].includes(value)) fail(path, '"solid" or "gradient"', value);
+        } else if (key === 'desktopBackgroundDirection') {
+            if (!Object.hasOwn(overlayDirections, value)) fail(path, 'one of the eight gradient directions', value);
+        } else if (key === 'desktopBackgroundImage') {
             if (value !== null && (typeof value !== 'string' || !/^data:image\/[a-z0-9.+-]+;base64,[a-z0-9+/=\s]+$/i.test(value))) {
                 fail(path, 'a base64 image data URL or null', value);
             }
@@ -158,5 +163,5 @@ export function prepareImport(config, bookmarkTree) {
             bookmarkSnapshot: createBookmarkSnapshot(bookmark) };
     });
     const { desktopBackgroundImage, ...settings } = config.settings;
-    return { tiles, globalSettings: { ...defaultSettings, ...settings }, desktopBackgroundImage, setupComplete: true };
+    return { tiles, globalSettings: { ...defaultSettings, ...settings, desktopBackgroundEndColor: settings.desktopBackgroundEndColor ?? getDefaultOverlayEndColor(settings.desktopBackgroundColor) }, desktopBackgroundImage, setupComplete: true };
 }

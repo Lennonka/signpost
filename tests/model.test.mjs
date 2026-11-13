@@ -80,3 +80,15 @@ test('Chrome wrappers surface API failures instead of returning missing records'
     };
     await assert.rejects(chromeCall(target, 'get', '1'), /Temporary failure/);
 });
+
+test('overlay settings preserve gradient choices and normalize legacy defaults', () => {
+    const legacy = normalizeSettings({ desktopBackgroundColor: '#112233' });
+    assert.equal(legacy.desktopBackgroundOverlay, 'solid');
+    assert.equal(legacy.desktopBackgroundEndColor, '#ffffff');
+    assert.equal(normalizeSettings().desktopBackgroundEndColor, '#000000');
+    const gradient = normalizeSettings({ desktopBackgroundOverlay: 'gradient', desktopBackgroundDirection: 'to top right', desktopBackgroundEndColor: '#abcdef' });
+    assert.equal(gradient.desktopBackgroundDirection, 'to top right');
+    assert.equal(normalizeSettings({ ...gradient, desktopBackgroundOverlay: 'solid' }).desktopBackgroundEndColor, '#abcdef');
+    assert.equal(normalizeSettings({ desktopBackgroundDirection: 'bad', desktopBackgroundOverlay: 'bad' }).desktopBackgroundDirection, 'to bottom');
+    assert.equal(normalizeSettings({ desktopBackgroundOverlay: 'bad' }).desktopBackgroundOverlay, 'solid');
+});

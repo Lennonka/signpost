@@ -1,4 +1,4 @@
-import { colorToRgba } from './colors.js';
+import { applyBackgroundOverlay, overlayDirections, getDefaultOverlayEndColor } from './background-overlay.js';
 import { openColorPicker } from './color-picker.js';
 import { defaultSettings, normalizeDesktopTextSize, normalizeGridColumns } from './model.js';
 import { storageGet, persist, storageRemove, reportStorageError } from './storage.js';
@@ -11,6 +11,7 @@ const controls = {
     alwaysShowResizeHandle: ['setting-always-show-resize-handle', 'change', 'checked'],
     alwaysShowMenuIcon: ['setting-always-show-menu-icon', 'change', 'checked'],
     desktopBackgroundColor: ['setting-background-color', 'input', 'value'],
+    desktopBackgroundEndColor: ['setting-background-end-color', 'input', 'value'],
     desktopBackgroundTransparency: ['setting-background-transparency', 'input', 'value'],
     defaultTileBackgroundColor: ['setting-default-tile-background-color', 'input', 'value'],
     defaultLinkTextColor: ['setting-default-link-text-color', 'input', 'value'],
@@ -25,6 +26,10 @@ export function normalizeSettings(settings = {}) {
     return {
         ...defaultSettings,
         ...settings,
+        desktopBackgroundOverlay: settings.desktopBackgroundOverlay === 'gradient' ? 'gradient' : 'solid',
+        desktopBackgroundDirection: Object.hasOwn(overlayDirections, settings.desktopBackgroundDirection)
+            ? settings.desktopBackgroundDirection : defaultSettings.desktopBackgroundDirection,
+        desktopBackgroundEndColor: settings.desktopBackgroundEndColor || getDefaultOverlayEndColor(settings.desktopBackgroundColor || defaultSettings.desktopBackgroundColor),
         desktopBackgroundTransparency: Number.isFinite(Number(settings.desktopBackgroundTransparency)) && settings.desktopBackgroundTransparency != null
             ? Math.min(100, Math.max(0, Math.round(Number(settings.desktopBackgroundTransparency))))
             : defaultSettings.desktopBackgroundTransparency,
@@ -39,9 +44,19 @@ export function createSettings() {
     let desktop;
     let saveTimer;
     const elements = Object.fromEntries(Object.entries(controls).map(([key, [id]]) => [key, document.getElementById(id)]));
+    const overlayButton = document.getElementById('setting-overlay-mode');
+    const overlayOptions = document.getElementById('overlay-options');
     const backgroundImageInput = document.getElementById('setting-background-image');
 
     function renderSettingsControls() {
+        const gradient = globalSettings.desktopBackgroundOverlay === 'gradient';
+        document.getElementById('overlay-start-label').textContent = gradient ? 'Start color' : 'Background overlay color';
+        document.getElementById('overlay-end-row').hidden = !gradient;
+        overlayButton.textContent = gradient ? overlayDirections[globalSettings.desktopBackgroundDirection] : 'Solid color';
+        overlayOptions.querySelectorAll('button').forEach(button => {
+            button.setAttribute('aria-pressed', String(button.dataset.direction
+                ? gradient && button.dataset.direction === globalSettings.desktopBackgroundDirection : !gradient));
+        });
         for (const [key, [, , property]] of Object.entries(controls)) {
             elements[key][property] = globalSettings[key];
             if (elements[key].classList.contains('color-swatch')) {
@@ -58,10 +73,8 @@ export function createSettings() {
 
     function applySettings(keys, saveTiles = false) {
         const changed = key => keys.includes(key);
-        if (changed('desktopBackgroundColor') || changed('desktopBackgroundTransparency')) {
-            document.body.style.backgroundColor = colorToRgba(globalSettings.desktopBackgroundColor,
-                1 - globalSettings.desktopBackgroundTransparency / 100);
-        }
+        if (keys.some(key => ['desktopBackgroundColor', 'desktopBackgroundEndColor', 'desktopBackgroundTransparency',
+            'desktopBackgroundOverlay', 'desktopBackgroundDirection'].includes(key))) applyBackgroundOverlay(globalSettings);
         if (changed('desktopTextSize')) document.getElementById('desktop').style.fontSize = `${globalSettings.desktopTextSize}px`;
         if (changed('alwaysShowMenuIcon')) document.body.classList.toggle('always-show-menu-icon', globalSettings.alwaysShowMenuIcon);
         if (changed('gridColumns') && desktop.grid.getColumn() !== globalSettings.gridColumns) {
@@ -125,6 +138,33 @@ export function createSettings() {
             }, { defer: event === 'input' }));
             if (event === 'input') elements[key].addEventListener('change', saveSettings);
         }
+        function closeOverlayOptions() {
+            overlayOptions.hidden = true;
+            overlayButton.setAttribute('aria-expanded', 'false');
+        }
+        overlayButton.addEventListener('click', () => {
+            overlayOptions.hidden = !overlayOptions.hidden;
+            overlayButton.setAttribute('aria-expanded', String(!overlayOptions.hidden));
+            if (!overlayOptions.hidden) overlayOptions.querySelector('[aria-pressed="true"]').focus();
+        });
+        overlayOptions.addEventListener('click', event => {
+            const button = event.target.closest('button');
+            if (!button) return;
+            updateSettings(button.dataset.direction
+                ? { desktopBackgroundOverlay: 'gradient', desktopBackgroundDirection: button.dataset.direction }
+                : { desktopBackgroundOverlay: 'solid' });
+            closeOverlayOptions();
+            overlayButton.focus();
+        });
+        document.addEventListener('click', event => {
+            if (!event.target.closest('.overlay-mode-setting')) closeOverlayOptions();
+        });
+        document.addEventListener('keydown', event => {
+            if (event.key === 'Escape' && !overlayOptions.hidden) {
+                closeOverlayOptions();
+                overlayButton.focus();
+            }
+        });
         window.addEventListener('pagehide', () => {
             if (saveTimer !== undefined) saveSettings();
         });
@@ -146,7 +186,10 @@ export function createSettings() {
             clearImage();
             updateSettings({
                 desktopBackgroundColor: defaultSettings.desktopBackgroundColor,
-                desktopBackgroundTransparency: defaultSettings.desktopBackgroundTransparency
+                desktopBackgroundTransparency: defaultSettings.desktopBackgroundTransparency,
+                desktopBackgroundOverlay: defaultSettings.desktopBackgroundOverlay,
+                desktopBackgroundDirection: defaultSettings.desktopBackgroundDirection,
+                desktopBackgroundEndColor: defaultSettings.desktopBackgroundEndColor
             });
         });
         document.getElementById('reset-settings').addEventListener('click', () => {

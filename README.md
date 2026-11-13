@@ -41,7 +41,7 @@ The **Text size** setting applies only to desktop tile text. Settings, the bookm
 
 ## Desktop background
 
-In Settings → Configure, choose a **Background image** first, then a **Background overlay color**. The color is painted above the image. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
+In Settings → Configure, choose a **Background image** first, then use **Background overlay** to choose **Solid color** or one of eight gradient directions. Solid mode shows one color control; gradient mode shows **Start color** and **End color**. The overlay is painted above the image. Both gradient colors use the same transparency. Switching to Solid keeps your gradient colors and direction for later. The initial end color is black for light start colors or white for dark start colors. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
 
 Existing saved colors now apply as overlays over existing images, with 50% transparency when no value was saved. No data migration is needed.
 

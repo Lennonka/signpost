@@ -124,3 +124,18 @@ test('folder title default round-trips while older backups retain black', () => 
     delete config.settings.defaultFolderTitleColor;
     assert.equal(prepareImport(config, tree).globalSettings.defaultFolderTitleColor, '#000000');
 });
+
+test('gradient settings round-trip and older backups retain solid overlays', () => {
+    const settings = { desktopBackgroundColor: '#123456', desktopBackgroundOverlay: 'gradient', desktopBackgroundDirection: 'to top left', desktopBackgroundEndColor: '#abcdef' };
+    const config = createExport(settings, [], tree);
+    const restored = prepareImport(config, tree).globalSettings;
+    for (const [key, value] of Object.entries(settings)) assert.equal(restored[key], value);
+    for (const [key, value] of [['desktopBackgroundOverlay', 'radial'], ['desktopBackgroundDirection', 'url(bad)'], ['desktopBackgroundEndColor', 'red']]) {
+        assert.throws(() => validateConfig({ ...config, settings: { ...config.settings, [key]: value } }), new RegExp('settings.' + key));
+    }
+    for (const key of ['desktopBackgroundOverlay', 'desktopBackgroundDirection', 'desktopBackgroundEndColor']) delete config.settings[key];
+    const legacy = prepareImport(config, tree).globalSettings;
+    assert.equal(legacy.desktopBackgroundOverlay, 'solid');
+    assert.equal(legacy.desktopBackgroundDirection, 'to bottom');
+    assert.equal(legacy.desktopBackgroundEndColor, '#ffffff');
+});
