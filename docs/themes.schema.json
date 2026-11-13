@@ -1,0 +1,108 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Signpost theme v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "format",
+    "version",
+    "name",
+    "settings"
+  ],
+  "properties": {
+    "format": {
+      "const": "signpost-theme"
+    },
+    "version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100,
+      "pattern": "\\S"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 300
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "description": "Omitted appearance settings use the documented defaults. Wallpaper is preserved when omitted. Defaults are annotations; import applies them.",
+      "properties": {
+        "desktopBackgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#ffffff"
+        },
+        "desktopBackgroundOverlay": {
+          "enum": [
+            "solid",
+            "gradient"
+          ],
+          "default": "solid"
+        },
+        "desktopBackgroundDirection": {
+          "enum": [
+            "to top",
+            "to top right",
+            "to right",
+            "to bottom right",
+            "to bottom",
+            "to bottom left",
+            "to left",
+            "to top left"
+          ],
+          "default": "to bottom"
+        },
+        "desktopBackgroundEndColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#000000"
+        },
+        "desktopBackgroundTransparency": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "0 is opaque; 100 is fully transparent.",
+          "default": 50
+        },
+        "defaultTileBackgroundColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#dbdbdb"
+        },
+        "defaultLinkTextColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#0000ee"
+        },
+        "defaultFolderTitleColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#000000"
+        },
+        "tileBackgroundTransparency": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "description": "0 is opaque; 100 is fully transparent.",
+          "default": 50
+        },
+        "desktopBackgroundImage": {
+          "description": "Omit to preserve the current wallpaper; null clears it; an image data URL replaces it.",
+          "anyOf": [
+            {
+              "type": "null"
+            },
+            {
+              "type": "string",
+              "pattern": "^[dD][aA][tT][aA]:[iI][mM][aA][gG][eE]/[a-zA-Z0-9.+-]+;[bB][aA][sS][eE]64,[a-zA-Z0-9+/=\\s]+$"
+            }
+          ]
+        }
+      }
+    }
+  }
+}

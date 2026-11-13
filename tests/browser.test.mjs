@@ -155,6 +155,14 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').textColor`), '#abcdef');
     assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile').style.backgroundColor`), 'rgba(18, 52, 86, 0.5)');
 
+    // Fresh pages start with Themes; reopening Settings preserves the selected tab.
+    await browser.evaluate(`document.getElementById('btn-settings').click()`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-themes').hidden`), false);
+    assert.equal(await browser.evaluate(`document.querySelector('.settings-tabs [role="tab"]').id`), 'settings-tab-themes');
+    await browser.evaluate(`document.getElementById('settings-tab-configure').click(); document.querySelector('#settings-panel .btn-close').click(); document.getElementById('btn-settings').click();`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-configure').hidden`), false);
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
+
     // Desktop text sizing must not resize dialogs or status messages.
     const uiTextSizes = `['#settings-panel', '#bookmark-picker', '#setup-description', '#setup-status', '#import-status', '#bubble-message', '#onboarding-hint'].map(selector => getComputedStyle(document.querySelector(selector)).fontSize)`;
     const originalUiSizes = await browser.evaluate(uiTextSizes);
@@ -277,7 +285,10 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`document.getElementById('settings-configure').hidden`), true);
     assert.equal(await browser.evaluate(`document.getElementById('export-settings').checkVisibility()`), true);
     assert.equal(await browser.evaluate(`document.getElementById('reset-settings').checkVisibility()`), false);
-    await browser.evaluate(`document.getElementById('settings-tab-backup').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowLeft', bubbles: true }))`);
+    await browser.evaluate(`document.getElementById('settings-tab-backup').dispatchEvent(new KeyboardEvent('keydown', { key: 'Home', bubbles: true }))`);
+    assert.equal(await browser.evaluate(`document.activeElement.id`), 'settings-tab-themes');
+    assert.equal(await browser.evaluate(`document.getElementById('settings-themes').hidden`), false);
+    await browser.evaluate(`document.getElementById('settings-tab-themes').dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowRight', bubbles: true }))`);
     assert.equal(await browser.evaluate(`document.activeElement.id`), 'settings-tab-configure');
     assert.equal(await browser.evaluate(`document.getElementById('settings-tab-configure').getAttribute('aria-selected')`), 'true');
     assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), true);
@@ -359,8 +370,48 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.ok(await browser.evaluate(`fixture.data.tiles.some(tile => tile.id === 'legacy')`));
     assert.deepEqual(browser.errors, []);
 
-    // First-run choices, cancellations, and intentionally empty desktops.
+    // Themes preserve layout, text size, wallpaper, and saved tile overrides.
+    await browser.evaluate(`window.themeBefore = JSON.stringify(fixture.data.tiles); document.getElementById('settings-tab-themes').click(); document.querySelectorAll('.theme-choice')[1].click();`);
+    await until(browser, `fixture.data.globalSettings.desktopBackgroundColor === '#101725' && document.getElementById('setting-background-color').value === '#101725'`);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-themes').hidden`), false);
+    assert.equal(await browser.evaluate(`JSON.stringify(fixture.data.tiles) === window.themeBefore`), true);
+    assert.equal(await browser.evaluate(`fixture.data.globalSettings.desktopBackgroundColor`), '#101725');
+    assert.equal(await browser.evaluate(`document.querySelector('.theme-choice[aria-pressed="true"] strong').textContent`), 'Midnight');
+    assert.equal(await browser.evaluate(`fixture.data.globalSettings.gridColumns`), 18);
+    assert.equal(await browser.evaluate(`fixture.data.globalSettings.desktopTextSize`), 14);
+    assert.match(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), /data:image/);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(196, 217, 255)');
+    await browser.evaluate(`window.beforeInvalidTheme = JSON.stringify(fixture.data); {
+        const files = new DataTransfer();
+        files.items.add(new File([JSON.stringify({ format: 'signpost-theme', version: 1, name: 'Invalid', settings: { desktopTextSize: 24 } })], 'invalid.json'));
+        const input = document.getElementById('import-theme'); input.files = files.files; input.dispatchEvent(new Event('change'));
+    }`);
+    await until(browser, `document.getElementById('theme-status').textContent.includes('Unknown theme setting')`);
+    assert.equal(await browser.evaluate(`JSON.stringify(fixture.data) === window.beforeInvalidTheme`), true);
+    await browser.evaluate(`{
+        const files = new DataTransfer();
+        files.items.add(new File([JSON.stringify({ format: 'signpost-theme', version: 1, name: 'Imported', settings: { desktopBackgroundColor: '#101725', desktopBackgroundOverlay: 'gradient', desktopBackgroundImage: null } })], 'theme.json'));
+        const input = document.getElementById('import-theme'); input.files = files.files; input.dispatchEvent(new Event('change'));
+    }`);
+    await until(browser, `fixture.data.desktopBackgroundImage === null && document.getElementById('theme-status').textContent === ''`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), 'none');
+    assert.equal(await browser.evaluate(`fixture.data.desktopBackgroundImage`), null);
+    assert.equal(await browser.evaluate(`document.querySelectorAll('.theme-choice[aria-pressed="true"]').length`), 0);
+    assert.equal(await browser.evaluate(`JSON.stringify(fixture.data.tiles) === window.themeBefore`), true);
+    await browser.evaluate(`document.getElementById('settings-tab-configure').click()`);
+    await until(browser, `fixture.data.settingsTab === 'settings-tab-configure'`);
+    const themedState = await browser.evaluate(`JSON.stringify(fixture.data)`);
     await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: failedInjection.identifier });
+    const themeInjection = await browser.call('Page.addScriptToEvaluateOnNewDocument', { source: mock + `fixture.data = ${themedState};` });
+    await browser.call('Page.navigate', { url });
+    await until(browser, `document.querySelector('[gs-id="20"] .folder-title') && document.getElementById('setting-background-color').value === '#101725'`);
+    assert.match(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), /linear-gradient/);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-configure').hidden`), false);
+    assert.equal(await browser.evaluate(`document.getElementById('settings-tab-configure').getAttribute('aria-selected')`), 'true');
+    assert.deepEqual(browser.errors, []);
+
+    // First-run choices, cancellations, and intentionally empty desktops.
+    await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: themeInjection.identifier });
     let onboardingInjection;
     let navigation = 0;
     async function openFresh(extra = '') {

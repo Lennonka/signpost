@@ -1,3 +1,5 @@
+import { storageGet, persist, reportStorageError } from './storage.js';
+
 export function openModal(modal) {
     if (!modal) return;
     modal.classList.remove('hidden');
@@ -23,7 +25,12 @@ export function showBubbleMessage(text, duration = 2000) {
 
 export function bindToolbar({ loadBookmarks }) {
     const settingsTabs = [...document.querySelectorAll('.settings-tabs [role="tab"]')];
-    function selectSettingsTab(selected) {
+    let tabSelected = false;
+    function selectSettingsTab(selected, save = true) {
+        if (save) {
+            tabSelected = true;
+            persist({ settingsTab: selected.id });
+        }
         for (const tab of settingsTabs) {
             const active = tab === selected;
             tab.setAttribute('aria-selected', String(active));
@@ -31,6 +38,10 @@ export function bindToolbar({ loadBookmarks }) {
             document.getElementById(tab.getAttribute('aria-controls')).hidden = !active;
         }
     }
+    storageGet('settingsTab').then(({ settingsTab }) => {
+        const savedTab = settingsTabs.find(tab => tab.id === settingsTab);
+        if (savedTab && !tabSelected) selectSettingsTab(savedTab, false);
+    }).catch(reportStorageError);
     settingsTabs.forEach((tab, index) => {
         tab.addEventListener('click', () => selectSettingsTab(tab));
         tab.addEventListener('keydown', event => {

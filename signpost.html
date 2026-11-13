@@ -55,15 +55,17 @@
         </div>
 
         <div class="settings-tabs" role="tablist" aria-label="Settings categories">
-            <button id="settings-tab-configure" role="tab" aria-selected="true" aria-controls="settings-configure"
-                tabindex="0">Configure</button>
+            <button id="settings-tab-themes" role="tab" aria-selected="true" aria-controls="settings-themes"
+                tabindex="0">Themes</button>
+            <button id="settings-tab-configure" role="tab" aria-selected="false" aria-controls="settings-configure"
+                tabindex="-1">Customize</button>
             <button id="settings-tab-backup" role="tab" aria-selected="false" aria-controls="settings-backup"
                 tabindex="-1">Backup</button>
         </div>
 
-        <div id="settings-configure" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-configure">
+        <div id="settings-configure" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-configure" hidden>
             <section class="settings-section">
-                <h4>Desktop</h4>
+                <h4>Desktop appearance</h4>
                 <label class="setting-row file-setting">
                     <span>
                         <strong>Background image</strong>
@@ -128,7 +130,7 @@
             </section>
 
             <section class="settings-section">
-                <h4>Tiles</h4>
+                <h4>Tile appearance</h4>
                 <label class="setting-row color-setting">
                     <span>
                         <strong>Default tile color</strong>
@@ -196,16 +198,30 @@
             <button id="reset-settings" class="danger-action">Reset all to defaults</button>
         </div>
 
+        <div id="settings-themes" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-themes">
+            <section class="settings-section">
+                <h4>Choose a theme</h4>
+                <p class="settings-description">Apply a color palette. Keeps your layout and custom tile colors.</p>
+                <div id="theme-choices" class="theme-choices"></div>
+                <p id="theme-status" class="settings-description" role="status" aria-live="polite"></p>
+            </section>
+            <section class="settings-section">
+                <h4>Import theme</h4>
+                <p class="settings-description">Apply appearance from a theme file. An included wallpaper replaces your current image.</p>
+                <label class="setting-row file-setting"><input id="import-theme" type="file" accept=".json,application/json" aria-label="Import theme from JSON" /></label>
+            </section>
+        </div>
+
         <div id="settings-backup" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-backup" hidden>
             <section class="settings-section">
                 <h4>Export configuration</h4>
-                <p class="settings-description">Save your settings, background image, and tile layout to a JSON file.
+                <p class="settings-description">Save appearance, tile layout, and behavior customization to a JSON file.
                 </p>
                 <button id="export-settings" class="secondary-action">Export to JSON</button>
             </section>
             <section class="settings-section">
                 <h4>Import configuration</h4>
-                <p class="settings-description">Load your settings, background image, and tile layout from a JSON file.
+                <p class="settings-description">Load appearance, tile layout, and behavior customization from a JSON file.
                 </p>
                 <label class="setting-row file-setting">
                     <input id="import-settings" type="file" accept=".json,application/json"

@@ -21,6 +21,7 @@ Choosing bookmarks opens the existing picker; restoring opens Settings → Backu
 - `js/model.js`, `js/colors.js`, and `js/placement.js` contain shared data transformations and helpers.
 - `js/ui.js` handles toolbar buttons, modals, and messages.
 - `background-image-startup.js` paints the cached wallpaper before the module graph loads. `js/background-image.js` synchronizes the wallpaper with extension storage.
+- `js/themes.js` defines built-in palettes, validates appearance-only theme files, and binds theme controls.
 - `background.js` handles popup messages, context menus, and active-tab bookmark status.
 
 The page, popup, and service worker use native ES modules. GridStack remains the vendored classic script.
@@ -33,7 +34,7 @@ The background worker owns all writes to `tiles`. Desktop pages send field chang
 
 Startup renders cached snapshots before refreshing from one bookmark-tree read. A failed read retains cached tiles and preserves legacy tile records without snapshots. A successful read removes tiles for bookmarks that no longer exist.
 
-In Settings → Configure → Tiles, **Default folder title color** appears after **Default tile color** and defaults to black. It updates folder titles immediately while preserving individual title color overrides.
+In Settings → Customize → Tile appearance, **Default folder title color** appears after **Default tile color** and defaults to black. It updates folder titles immediately while preserving individual title color overrides.
 
 Tile borders use the tile's background color and transparency, matching folder headers. They follow the default tile color or the tile's custom background color and update when the background is reset.
 
@@ -41,9 +42,15 @@ The **Text size** setting applies only to desktop tile text. Settings, the bookm
 
 ## Desktop background
 
-In Settings → Configure, choose a **Background image** first, then use **Background overlay** to choose **Solid color** or one of eight gradient directions. Solid mode shows one color control; gradient mode shows **Start color** and **End color**. The overlay is painted above the image. Both gradient colors use the same transparency. Switching to Solid keeps your gradient colors and direction for later. The initial end color is black for light start colors or white for dark start colors. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
+In Settings → Customize, choose a **Background image** first, then use **Background overlay** to choose **Solid color** or one of eight gradient directions. Solid mode shows one color control; gradient mode shows **Start color** and **End color**. The overlay is painted above the image. Both gradient colors use the same transparency. Switching to Solid keeps your gradient colors and direction for later. The initial end color is black for light start colors or white for dark start colors. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
 
 Existing saved colors now apply as overlays over existing images, with 50% transparency when no value was saved. No data migration is needed.
+
+## Themes
+
+Settings remembers the selected tab across page reloads and browser sessions. Themes is the default before a tab has been selected. Tab order is Themes → Customize → Backup.
+
+Settings → Themes includes two light palettes (Daylight and Linen) and two dark palettes (Midnight and Aubergine) and theme JSON import, supporting optional wallpaper. The preset matching your current appearance stays highlighted, including after reload; changing its appearance settings clears the highlight. Themes preserve text size, layout, behavior preferences, and custom tile colors. See the [theme format](docs/themes.md) and [JSON Schema](docs/themes.schema.json).
 
 ## Configuration backup
 
@@ -54,6 +61,7 @@ In Settings → Backup, choose **Export to JSON** to download settings, wallpape
 Use Node.js 22 or newer:
 
 ```sh
+node tests/themes.test.mjs
 node tests/config.test.mjs
 node tests/model.test.mjs
 node tests/layout.test.mjs
@@ -72,3 +80,5 @@ For an installed-extension check, reload the extension and open a new tab. Verif
 5. Change settings, reset defaults, upload and clear wallpaper, and reload.
 6. Edit separate tiles in two open desktops and confirm both changes survive reloading.
 7. Rename or delete a bookmark and reload to refresh its tile.
+
+Theme checks: apply each built-in palette, import with and without wallpaper, and reload to confirm persistence. Verify text size, grid columns, tile positions, and custom tile colors remain intact; invalid theme files must leave appearance unchanged.

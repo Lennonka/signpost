@@ -1,3 +1,5 @@
+import { bindThemes } from './themes.js';
+import { storageSet } from './storage.js';
 import { applyBackgroundOverlay, overlayDirections, getDefaultOverlayEndColor } from './background-overlay.js';
 import { openColorPicker } from './color-picker.js';
 import { defaultSettings, normalizeDesktopTextSize, normalizeGridColumns } from './model.js';
@@ -43,12 +45,14 @@ export function createSettings() {
     const globalSettings = { ...defaultSettings };
     let desktop;
     let saveTimer;
+    let refreshThemeSelection = () => {};
     const elements = Object.fromEntries(Object.entries(controls).map(([key, [id]]) => [key, document.getElementById(id)]));
     const overlayButton = document.getElementById('setting-overlay-mode');
     const overlayOptions = document.getElementById('overlay-options');
     const backgroundImageInput = document.getElementById('setting-background-image');
 
     function renderSettingsControls() {
+        refreshThemeSelection();
         const gradient = globalSettings.desktopBackgroundOverlay === 'gradient';
         document.getElementById('overlay-start-label').textContent = gradient ? 'Start color' : 'Background overlay color';
         document.getElementById('overlay-end-row').hidden = !gradient;
@@ -119,6 +123,29 @@ export function createSettings() {
         Object.assign(globalSettings, normalizeSettings(data.globalSettings));
         renderSettingsControls();
         applySettings(Object.keys(controls));
+
+        refreshThemeSelection = bindThemes({ globalSettings, async applyTheme(themeSettings) {
+            const { desktopBackgroundImage, ...appearance } = themeSettings;
+            clearTimeout(saveTimer);
+            saveTimer = undefined;
+            const nextSettings = normalizeSettings({ ...globalSettings, ...appearance });
+            const data = { globalSettings: nextSettings };
+            if (desktopBackgroundImage !== undefined) data.desktopBackgroundImage = desktopBackgroundImage;
+            await storageSet(data);
+            Object.assign(globalSettings, nextSettings);
+            renderSettingsControls();
+            applySettings(Object.keys(appearance));
+            if (desktopBackgroundImage !== undefined) {
+                if (desktopBackgroundImage === null) {
+                    clearDesktopBackgroundImage();
+                    removeCachedDesktopBackgroundImage();
+                } else {
+                    applyDesktopBackgroundImage(desktopBackgroundImage);
+                    cacheDesktopBackgroundImage(desktopBackgroundImage);
+                }
+                backgroundImageInput.value = '';
+            }
+        } });
 
         for (const [key, [, event, property]] of Object.entries(controls)) {
             if (elements[key].classList.contains('color-swatch')) {

@@ -25,6 +25,8 @@ Signpost is a Chrome Manifest V3 extension that replaces the new tab page with a
 - Use the existing Chrome API wrappers and error-handling patterns. Preserve cached tiles when bookmark reads fail.
 - After changes, review and update `README.md` and `AGENTS.md` as needed to keep documented behavior, architecture, setup, validation commands, and agent instructions accurate.
 
+- Keep theme JSON separate from configuration backups. Themes may change colors, overlays, transparency, and optional wallpaper only; preserve text size, layout, preferences, and saved tile color overrides. See `docs/themes.md`.
+
 ## Versioning
 
 - Bump `version` in `manifest.json` once per branch when it includes non-documentation changes. Documentation-only changes, including updates to `README.md` and `AGENTS.md`, do not require a version bump.
@@ -37,6 +39,7 @@ Signpost is a Chrome Manifest V3 extension that replaces the new tab page with a
 Use Node.js 22 or newer. Run the checks relevant to the change; for broad behavior changes, run the full suite:
 
 ```sh
+node tests/themes.test.mjs
 node tests/config.test.mjs
 node tests/model.test.mjs
 node tests/layout.test.mjs
