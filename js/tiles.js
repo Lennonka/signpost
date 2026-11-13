@@ -29,6 +29,8 @@ export function createTileRenderer(globalSettings) {
         const scrollbarColors = getScrollbarColors(color);
         content.dataset.baseBackgroundColor = color;
         content.style.backgroundColor = tileBackground;
+        const frame = content.closest('.grid-stack-item-content');
+        if (frame) frame.style.borderColor = tileBackground;
         content.style.setProperty('--tile-scrollbar-thumb', scrollbarColors.thumb);
         content.style.setProperty('--tile-scrollbar-track', scrollbarColors.track);
         if (header) {
