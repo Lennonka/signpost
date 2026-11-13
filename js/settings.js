@@ -62,7 +62,7 @@ export function createSettings() {
             document.body.style.backgroundColor = colorToRgba(globalSettings.desktopBackgroundColor,
                 1 - globalSettings.desktopBackgroundTransparency / 100);
         }
-        if (changed('desktopTextSize')) document.body.style.fontSize = `${globalSettings.desktopTextSize}px`;
+        if (changed('desktopTextSize')) document.getElementById('desktop').style.fontSize = `${globalSettings.desktopTextSize}px`;
         if (changed('alwaysShowMenuIcon')) document.body.classList.toggle('always-show-menu-icon', globalSettings.alwaysShowMenuIcon);
         if (changed('gridColumns') && desktop.grid.getColumn() !== globalSettings.gridColumns) {
             desktop.grid.column(globalSettings.gridColumns, 'move');

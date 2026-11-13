@@ -155,6 +155,17 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').textColor`), '#abcdef');
     assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile').style.backgroundColor`), 'rgba(18, 52, 86, 0.5)');
 
+    // Desktop text sizing must not resize dialogs or status messages.
+    const uiTextSizes = `['#settings-panel', '#bookmark-picker', '#setup-description', '#setup-status', '#import-status', '#bubble-message', '#onboarding-hint'].map(selector => getComputedStyle(document.querySelector(selector)).fontSize)`;
+    const originalUiSizes = await browser.evaluate(uiTextSizes);
+    for (const size of [8, 24, 14]) {
+        await browser.evaluate(`{ const input = document.getElementById('setting-desktop-text-size'); input.value = '${size}'; input.dispatchEvent(new Event('input')); input.dispatchEvent(new Event('change')); }`);
+        await until(browser, `fixture.data.globalSettings.desktopTextSize === ${size}`);
+        assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="10"] .bookmark-title')).fontSize`), `${size}px`);
+        assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).fontSize`), `${size}px`);
+        assert.deepEqual(await browser.evaluate(uiTextSizes), originalUiSizes);
+    }
+
     // Tile pickers replace the menu and retain live updates and keyboard dismissal.
     await browser.evaluate(`document.querySelector('[gs-id="10"] .tile-menu-icon').click(); fixture.menuRect = document.querySelector('[gs-id="10"] .tile-menu').getBoundingClientRect().toJSON(); document.querySelector('[gs-id="10"] .set-bg-color').click();`);
     assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .tile-menu').classList.contains('hidden')`), true);

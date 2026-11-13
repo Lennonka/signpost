@@ -37,6 +37,8 @@ In Settings → Configure → Tiles, **Default folder title color** appears afte
 
 Tile borders use the tile's background color and transparency, matching folder headers. They follow the default tile color or the tile's custom background color and update when the background is reset.
 
+The **Text size** setting applies only to desktop tile text. Settings, the bookmark picker, onboarding, and info/error messages keep their own text sizes.
+
 ## Desktop background
 
 In Settings → Configure, choose a **Background image** first, then a **Background overlay color**. The color is painted above the image. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
