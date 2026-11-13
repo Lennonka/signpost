@@ -68,10 +68,10 @@ export function validateConfig(config) {
         throw new Error(`${path}: expected ${expected}; found ${describe(value)}.`);
     };
     const fieldPath = (path, key) => path === 'configuration' ? key : `${path}.${key}`;
-    const keys = (value, allowed, path) => {
+    const keys = (value, allowed, path, optional = []) => {
         if (!object(value)) fail(path, 'an object', value);
         for (const key of allowed) {
-            if (!Object.hasOwn(value, key)) throw new Error(`${fieldPath(path, key)}: required field is missing.`);
+            if (!optional.includes(key) && !Object.hasOwn(value, key)) throw new Error(`${fieldPath(path, key)}: required field is missing.`);
         }
         for (const key of Object.keys(value)) {
             if (!allowed.includes(key)) throw new Error(`${fieldPath(path, key)}: unknown field; remove it from the configuration.`);
@@ -85,10 +85,11 @@ export function validateConfig(config) {
     if (typeof config.exportedAt !== 'string' || !/^\d{4}-\d\d-\d\dT.*(?:Z|[+-]\d\d:\d\d)$/.test(config.exportedAt) ||
         !Number.isFinite(Date.parse(config.exportedAt))) fail('exportedAt', 'an ISO 8601 timestamp such as "2026-10-23T12:00:00.000Z"', config.exportedAt);
     const settingKeys = Object.keys(defaultSettings).filter(key => key !== 'tileSize');
-    keys(config.settings, settingKeys, 'settings');
-    const ranges = { gridColumns: [6, 36], desktopTextSize: [8, 24], tileBackgroundTransparency: [0, 100] };
+    keys(config.settings, settingKeys, 'settings', ['desktopBackgroundTransparency', 'defaultFolderTitleColor']);
+    const ranges = { gridColumns: [6, 36], desktopTextSize: [8, 24], tileBackgroundTransparency: [0, 100], desktopBackgroundTransparency: [0, 100] };
     const color = value => typeof value === 'string' && /^#[0-9a-f]{6}$/i.test(value);
     for (const key of settingKeys) {
+        if (['desktopBackgroundTransparency', 'defaultFolderTitleColor'].includes(key) && !Object.hasOwn(config.settings, key)) continue;
         const value = config.settings[key];
         const path = `settings.${key}`;
         if (key === 'desktopBackgroundImage') {

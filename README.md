@@ -26,6 +26,14 @@ The background worker owns all writes to `tiles`. Desktop pages send field chang
 
 Startup renders cached snapshots before refreshing from one bookmark-tree read. A failed read retains cached tiles and preserves legacy tile records without snapshots. A successful read removes tiles for bookmarks that no longer exist.
 
+In Settings → Configure → Tiles, **Default folder title color** appears after **Default tile color** and defaults to black. It updates folder titles immediately while preserving individual title color overrides.
+
+## Desktop background
+
+In Settings → Configure, choose a **Background image** first, then a **Background overlay color**. The color is painted above the image. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Clearing the background removes the image and resets the overlay color and transparency.
+
+Existing saved colors now apply as overlays over existing images, with 50% transparency when no value was saved. No data migration is needed.
+
 ## Configuration backup
 
 In Settings → Backup, choose **Export to JSON** to download settings, wallpaper, and the current tile layout. Use **Import from JSON** in the same tab to restore a backup after confirmation. Import replaces settings and layout, matching existing bookmarks by URL and folders by title path; unresolved references abort the import. Bookmark tiles use URLs rather than browser IDs. See the [format documentation](docs/config.md) and [JSON Schema](docs/config.schema.json).

@@ -62,13 +62,6 @@
         <div id="settings-configure" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-configure">
             <section class="settings-section">
                 <h4>Desktop</h4>
-                <label class="setting-row color-setting">
-                    <span>
-                        <strong>Background color</strong>
-                        <small>Used when no image is set.</small>
-                    </span>
-                    <button type="button" class="color-swatch" id="setting-background-color" aria-label="Choose color" aria-haspopup="dialog"></button>
-                </label>
                 <label class="setting-row file-setting">
                     <span>
                         <strong>Background image</strong>
@@ -76,7 +69,23 @@
                     </span>
                     <input type="file" id="setting-background-image" accept="image/*" />
                 </label>
-                <button id="clear-background" class="secondary-action">Clear background color and image</button>
+                <label class="setting-row color-setting">
+                    <span>
+                        <strong>Background overlay color</strong>
+                        <small>Applied above the background image.</small>
+                    </span>
+                    <button type="button" class="color-swatch" id="setting-background-color" aria-label="Choose color"
+                        aria-haspopup="dialog"></button>
+                </label>
+                <label class="setting-row range-setting">
+                    <span>
+                        <strong>Background overlay transparency</strong>
+                        <small><span id="setting-background-transparency-value">50%</span> transparent. 100% shows the
+                            image without an overlay.</small>
+                    </span>
+                    <input type="range" id="setting-background-transparency" min="0" max="100" step="1" />
+                </label>
+                <button id="clear-background" class="secondary-action">Clear background image and reset overlay</button>
                 <div class="settings-separator" aria-hidden="true"></div>
                 <label class="setting-row range-setting">
                     <span>
@@ -102,14 +111,24 @@
                         <strong>Default tile color</strong>
                         <small>Applied to new and reset tiles.</small>
                     </span>
-                    <button type="button" class="color-swatch" id="setting-default-tile-background-color" aria-label="Choose color" aria-haspopup="dialog"></button>
+                    <button type="button" class="color-swatch" id="setting-default-tile-background-color"
+                        aria-label="Choose color" aria-haspopup="dialog"></button>
+                </label>
+                <label class="setting-row color-setting">
+                    <span>
+                        <strong>Default folder title color</strong>
+                        <small>Used by folder tiles without their own title color.</small>
+                    </span>
+                    <button type="button" class="color-swatch" id="setting-default-folder-title-color"
+                        aria-label="Choose color" aria-haspopup="dialog"></button>
                 </label>
                 <label class="setting-row color-setting">
                     <span>
                         <strong>Default link text color</strong>
                         <small>Used by bookmark tiles without their own color.</small>
                     </span>
-                    <button type="button" class="color-swatch" id="setting-default-link-text-color" aria-label="Choose color" aria-haspopup="dialog"></button>
+                    <button type="button" class="color-swatch" id="setting-default-link-text-color"
+                        aria-label="Choose color" aria-haspopup="dialog"></button>
                 </label>
                 <label class="setting-row range-setting">
                     <span>

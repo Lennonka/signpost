@@ -1,3 +1,4 @@
+import { colorToRgba } from './colors.js';
 import { openColorPicker } from './color-picker.js';
 import { defaultSettings, normalizeDesktopTextSize, normalizeGridColumns } from './model.js';
 import { storageGet, persist, storageRemove, reportStorageError } from './storage.js';
@@ -10,8 +11,10 @@ const controls = {
     alwaysShowResizeHandle: ['setting-always-show-resize-handle', 'change', 'checked'],
     alwaysShowMenuIcon: ['setting-always-show-menu-icon', 'change', 'checked'],
     desktopBackgroundColor: ['setting-background-color', 'input', 'value'],
+    desktopBackgroundTransparency: ['setting-background-transparency', 'input', 'value'],
     defaultTileBackgroundColor: ['setting-default-tile-background-color', 'input', 'value'],
     defaultLinkTextColor: ['setting-default-link-text-color', 'input', 'value'],
+    defaultFolderTitleColor: ['setting-default-folder-title-color', 'input', 'value'],
     desktopTextSize: ['setting-desktop-text-size', 'input', 'value'],
     gridColumns: ['setting-grid-columns', 'input', 'value'],
     tileBackgroundTransparency: ['setting-tile-transparency', 'input', 'value']
@@ -22,6 +25,9 @@ export function normalizeSettings(settings = {}) {
     return {
         ...defaultSettings,
         ...settings,
+        desktopBackgroundTransparency: Number.isFinite(Number(settings.desktopBackgroundTransparency)) && settings.desktopBackgroundTransparency != null
+            ? Math.min(100, Math.max(0, Math.round(Number(settings.desktopBackgroundTransparency))))
+            : defaultSettings.desktopBackgroundTransparency,
         gridColumns: normalizeGridColumns(settings.gridColumns),
         desktopTextSize: normalizeDesktopTextSize(settings.desktopTextSize)
     };
@@ -46,12 +52,16 @@ export function createSettings() {
         }
         document.getElementById('setting-desktop-text-size-value').textContent = globalSettings.desktopTextSize;
         document.getElementById('setting-grid-columns-value').textContent = globalSettings.gridColumns;
+        document.getElementById('setting-background-transparency-value').textContent = `${globalSettings.desktopBackgroundTransparency}%`;
         document.getElementById('setting-tile-transparency-value').textContent = `${globalSettings.tileBackgroundTransparency}%`;
     }
 
     function applySettings(keys, saveTiles = false) {
         const changed = key => keys.includes(key);
-        if (changed('desktopBackgroundColor')) document.body.style.backgroundColor = globalSettings.desktopBackgroundColor;
+        if (changed('desktopBackgroundColor') || changed('desktopBackgroundTransparency')) {
+            document.body.style.backgroundColor = colorToRgba(globalSettings.desktopBackgroundColor,
+                1 - globalSettings.desktopBackgroundTransparency / 100);
+        }
         if (changed('desktopTextSize')) document.body.style.fontSize = `${globalSettings.desktopTextSize}px`;
         if (changed('alwaysShowMenuIcon')) document.body.classList.toggle('always-show-menu-icon', globalSettings.alwaysShowMenuIcon);
         if (changed('gridColumns') && desktop.grid.getColumn() !== globalSettings.gridColumns) {
@@ -64,6 +74,7 @@ export function createSettings() {
             desktop.grid.getGridItems().forEach(item => desktop.grid.prepareDragDrop(item, true));
         }
         if (changed('defaultTileBackgroundColor') || changed('tileBackgroundTransparency')) desktop.applyTileTransparencyToAllTiles();
+        if (changed('defaultFolderTitleColor')) desktop.applyDefaultFolderTitleColorToFolderTiles();
         if (changed('defaultLinkTextColor')) desktop.applyDefaultLinkTextColorToBookmarkTiles();
     }
 
@@ -110,7 +121,7 @@ export function createSettings() {
                 continue;
             }
             elements[key].addEventListener(event, () => updateSettings({
-                [key]: key === 'tileBackgroundTransparency' ? Number(elements[key][property]) : elements[key][property]
+                [key]: key.endsWith('Transparency') ? Number(elements[key][property]) : elements[key][property]
             }, { defer: event === 'input' }));
             if (event === 'input') elements[key].addEventListener('change', saveSettings);
         }
@@ -133,7 +144,10 @@ export function createSettings() {
         });
         document.getElementById('clear-background').addEventListener('click', () => {
             clearImage();
-            updateSettings({ desktopBackgroundColor: defaultSettings.desktopBackgroundColor });
+            updateSettings({
+                desktopBackgroundColor: defaultSettings.desktopBackgroundColor,
+                desktopBackgroundTransparency: defaultSettings.desktopBackgroundTransparency
+            });
         });
         document.getElementById('reset-settings').addEventListener('click', () => {
             if (!confirm('Reset all settings to defaults and remove the background image? This action is irreversible. Your tile layout will remain in place.')) return;

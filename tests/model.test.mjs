@@ -17,7 +17,13 @@ test('settings retain saved fields while normalizing bounds and defaults', () =>
     assert.equal(normalizeDesktopTextSize(50), 24);
     assert.deepEqual(normalizeSettings({ gridColumns: '12', openInNewTab: true }).gridColumns, 12);
     assert.equal(normalizeSettings({ openInNewTab: true }).openInNewTab, true);
+    assert.equal(normalizeSettings().defaultFolderTitleColor, '#000000');
     assert.equal(normalizeSettings().tileBackgroundTransparency, 50);
+    assert.equal(normalizeSettings().desktopBackgroundTransparency, 50);
+    assert.equal(normalizeSettings({ desktopBackgroundTransparency: '75' }).desktopBackgroundTransparency, 75);
+    assert.equal(normalizeSettings({ desktopBackgroundTransparency: 200 }).desktopBackgroundTransparency, 100);
+    assert.equal(normalizeSettings({ desktopBackgroundTransparency: -1 }).desktopBackgroundTransparency, 0);
+    assert.equal(normalizeSettings({ desktopBackgroundTransparency: 'bad' }).desktopBackgroundTransparency, 50);
     assert.equal(normalizeSettings(null).gridColumns, 18);
 });
 

@@ -16,9 +16,11 @@ Example tile records within an export:
     "confirmBeforeRemove": false,
     "gridColumns": 18,
     "desktopBackgroundColor": "#ffffff",
+    "desktopBackgroundTransparency": 50,
     "desktopTextSize": 14,
     "defaultTileBackgroundColor": "#dbdbdb",
     "defaultLinkTextColor": "#0000ee",
+    "defaultFolderTitleColor": "#000000",
     "desktopBackgroundImage": null,
     "tileBackgroundTransparency": 50,
     "alwaysShowResizeHandle": false,
@@ -45,7 +47,7 @@ Bookmark identity is the exact stored URL, including query strings and fragments
 
 Folders have no URL. Their fallback identity is an ordered array of folder titles from the browser's top-level bookmark folder to the tile's folder, excluding the invisible root. Paths depend on titles and can be ambiguous for identically named siblings or differ across browser languages. Import rejects ambiguous folder paths. Folder contents and the full bookmark tree are not exported; this file backs up Signpost configuration, not browser bookmarks.
 
-Coordinates `x` and `y` are zero-based grid cells; `w` and `h` are positive cell counts. `settings.gridColumns` gives the grid width. Tile colors are hexadecimal overrides; an empty string uses the default appearance. Settings contain all current user-facing controls; the unused legacy `tileSize` is omitted. `desktopBackgroundImage` is the stored image data URL, or `null`.
+Coordinates `x` and `y` are zero-based grid cells; `w` and `h` are positive cell counts. `settings.gridColumns` gives the grid width. Tile colors are hexadecimal overrides; an empty string uses the default appearance. `defaultFolderTitleColor` controls folder titles without a per-tile text color override; it defaults to black (`#000000`) when omitted in older backups. Settings contain all current user-facing controls; the unused legacy `tileSize` is omitted. `desktopBackgroundImage` is the stored image data URL, or `null`. `desktopBackgroundColor` is the overlay above the image. `desktopBackgroundTransparency` ranges from 0 (opaque) to 100 (fully transparent), defaulting to 50 when omitted in older backups. Existing saved colors now act as overlays; no data migration is required. New exports include the transparency field and require a version of Signpost that supports it.
 
 Export reads the bookmark tree to resolve current URLs and folder paths. A cached URL can resolve a missing bookmark tile. An unidentifiable tile or failed bookmark/storage read aborts the download and displays an error, preventing silent loss of layout records.
 

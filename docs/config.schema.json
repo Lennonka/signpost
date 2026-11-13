@@ -50,6 +50,13 @@
         "alwaysShowMenuIcon": {
           "type": "boolean"
         },
+        "desktopBackgroundTransparency": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 100,
+          "default": 50,
+          "description": "Overlay transparency: 0 is opaque, 100 is fully transparent. Optional for older backups."
+        },
         "desktopBackgroundColor": {
           "type": "string",
           "pattern": "^#[0-9a-fA-F]{6}$"
@@ -57,6 +64,12 @@
         "defaultTileBackgroundColor": {
           "type": "string",
           "pattern": "^#[0-9a-fA-F]{6}$"
+        },
+        "defaultFolderTitleColor": {
+          "type": "string",
+          "pattern": "^#[0-9a-fA-F]{6}$",
+          "default": "#000000",
+          "description": "Default folder title color. Optional for older backups."
         },
         "defaultLinkTextColor": {
           "type": "string",

@@ -3,20 +3,15 @@ import { storageGet } from './storage.js';
 const DESKTOP_BACKGROUND_IMAGE_CACHE_KEY = 'signpost.desktopBackgroundImage';
 
 export function applyDesktopBackgroundImage(desktopBackgroundImage) {
-    [document.documentElement, document.body].forEach(target => {
-        if (!target) return;
-        target.style.backgroundImage = `url(${desktopBackgroundImage})`;
-        target.style.backgroundSize = 'cover';
-        target.style.backgroundPosition = 'center';
-        target.style.backgroundRepeat = 'no-repeat';
-    });
+    const style = document.documentElement.style;
+    style.backgroundImage = `url(${desktopBackgroundImage})`;
+    style.backgroundSize = 'cover';
+    style.backgroundPosition = 'center';
+    style.backgroundRepeat = 'no-repeat';
 }
 
 export function clearDesktopBackgroundImage() {
-    [document.documentElement, document.body].forEach(target => {
-        if (!target) return;
-        target.style.backgroundImage = '';
-    });
+    document.documentElement.style.backgroundImage = '';
 }
 
 export function cacheDesktopBackgroundImage(desktopBackgroundImage) {

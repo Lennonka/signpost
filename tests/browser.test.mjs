@@ -191,6 +191,49 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     assert.equal(await browser.evaluate(`document.querySelector('.color-picker')`), null);
     await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click();`);
 
+    // The image stays below the body overlay; controls preview and persist independently.
+    assert.equal(await browser.evaluate(`document.querySelector('#settings-configure .setting-row strong').textContent`), 'Background image');
+    assert.equal(await browser.evaluate(`document.getElementById('setting-background-transparency').value`), '50');
+    await browser.evaluate(`(() => {
+        const files = new DataTransfer();
+        files.items.add(new File(['<svg xmlns="http://www.w3.org/2000/svg" width="10" height="10"><path fill="red" d="M0 0h10v10H0z"/></svg>'], 'background.svg', { type: 'image/svg+xml' }));
+        const input = document.getElementById('setting-background-image');
+        input.files = files.files; input.dispatchEvent(new Event('change'));
+    })()`);
+    await until(browser, `Boolean(fixture.data.desktopBackgroundImage)`);
+    assert.match(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), /data:image/);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'none');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(255, 255, 255, 0.5)');
+    await browser.evaluate(`document.getElementById('btn-settings').click(); document.getElementById('setting-background-color').click(); { const hex = document.querySelector('.color-picker-hex'); hex.value = '#123456'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(18, 52, 86, 0.5)');
+    for (const [transparency, color] of [[0, 'rgb(18, 52, 86)'], [100, 'rgba(18, 52, 86, 0)'], [75, 'rgba(18, 52, 86, 0.25)']]) {
+        await browser.evaluate(`{ const input = document.getElementById('setting-background-transparency'); input.value = '${transparency}'; input.dispatchEvent(new Event('input')); input.dispatchEvent(new Event('change')); }`);
+        assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), color);
+        await until(browser, `fixture.data.globalSettings.desktopBackgroundTransparency === ${transparency}`);
+    }
+    await browser.evaluate(`document.getElementById('clear-background').click()`);
+    await until(browser, `!fixture.data.desktopBackgroundImage && fixture.data.globalSettings.desktopBackgroundTransparency === 50`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), 'none');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(255, 255, 255, 0.5)');
+    assert.equal(await browser.evaluate(`document.getElementById('setting-background-image').value`), '');
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
+
+    // Folder defaults apply live without replacing individual title overrides.
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(0, 0, 0)');
+    assert.equal(await browser.evaluate(`document.getElementById('setting-default-tile-background-color').closest('label').nextElementSibling.querySelector('strong').textContent`), 'Default folder title color');
+    await browser.evaluate(`document.getElementById('btn-settings').click(); document.getElementById('setting-default-folder-title-color').click(); { const hex = document.querySelector('.color-picker-hex'); hex.value = '#345678'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    await until(browser, `fixture.data.globalSettings.defaultFolderTitleColor === '#345678'`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(52, 86, 120)');
+    assert.equal(await browser.evaluate(`document.querySelector('[gs-id="10"] .bookmark-title').style.color`), 'rgb(171, 205, 239)');
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click(); document.querySelector('[gs-id="20"] .tile-menu-icon').click(); document.querySelector('[gs-id="20"] .set-text-color').click()`);
+    assert.equal(await browser.evaluate(`document.querySelector('.color-picker-hex').value`), '#345678');
+    await browser.evaluate(`{ const hex = document.querySelector('.color-picker-hex'); hex.value = '#987654'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    await until(browser, `fixture.data.tiles.find(tile => tile.id === '20').textColor === '#987654'`);
+    await browser.evaluate(`document.getElementById('btn-settings').click(); document.getElementById('setting-default-folder-title-color').click(); { const hex = document.querySelector('.color-picker-hex'); hex.value = '#456789'; hex.dispatchEvent(new Event('input')); } document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));`);
+    await until(browser, `fixture.data.globalSettings.defaultFolderTitleColor === '#456789'`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(152, 118, 84)');
+    await browser.evaluate(`document.querySelector('#settings-panel .btn-close').click()`);
+
     // Settings tabs switch visible actions and support keyboard navigation.
     await browser.evaluate(`document.getElementById('btn-settings').click()`);
     assert.equal(await browser.evaluate(`document.getElementById('settings-backup').hidden`), true);
@@ -234,6 +277,7 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     // Replaced tile markup still responds to delegated actions.
     await browser.evaluate(`document.querySelector('.bookmark-folder').click()`);
     await until(browser, `fixture.data.tiles.some(tile => tile.id === '30')`);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="30"] .folder-title')).color`), 'rgb(69, 103, 137)');
     await browser.evaluate(`document.getElementById('btn-add').click()`);
     await until(browser, `document.querySelectorAll('.bookmark-tree-item').length === 5`);
     await browser.evaluate(`const search = document.getElementById('bookmark-search'); search.value = 'Deep'; search.dispatchEvent(new Event('input'));`);
@@ -251,6 +295,9 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
     await browser.evaluate(`window.confirm = () => true; document.getElementById('reset-settings').click()`);
     await until(browser, `fixture.data.globalSettings.openInNewTab === false`);
     assert.equal(await browser.evaluate(`fixture.data.globalSettings.gridColumns`), 18);
+    assert.equal(await browser.evaluate(`fixture.data.globalSettings.defaultFolderTitleColor`), '#000000');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="30"] .folder-title')).color`), 'rgb(0, 0, 0)');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(152, 118, 84)');
     assert.equal(await browser.evaluate(`fixture.data.tiles.find(tile => tile.id === '10').backgroundColor`), '#123456');
 
     await browser.evaluate(`document.querySelector('[gs-id="40"] .tile-menu-icon').click(); document.querySelector('[gs-id="40"] .remove-tile').click();`);
@@ -259,11 +306,16 @@ test('desktop integration with real GridStack and mocked Chrome APIs', { timeout
 
     // Failed refresh must preserve both cached and legacy tiles without snapshots.
     await browser.call('Page.removeScriptToEvaluateOnNewDocument', { identifier: injection.identifier });
-    await browser.call('Page.addScriptToEvaluateOnNewDocument', { source: mock + `fixture.failBookmarks = true; fixture.data.tiles.push({ id: 'legacy', x: 4, y: 0, w: 1, h: 1 });` });
+    await browser.call('Page.addScriptToEvaluateOnNewDocument', { source: mock + `fixture.data.globalSettings.defaultFolderTitleColor = '#345678'; fixture.data.globalSettings.desktopBackgroundColor = '#123456'; fixture.data.globalSettings.desktopBackgroundTransparency = 75; fixture.data.desktopBackgroundImage = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7'; fixture.failBookmarks = true; fixture.data.tiles.push({ id: 'legacy', x: 4, y: 0, w: 1, h: 1 });` });
     await browser.call('Page.navigate', { url });
     await until(browser, `document.querySelector('.bookmark-title')?.textContent === 'Cached title'`);
     await browser.evaluate(`document.getElementById('setting-grid-columns').value = '18'; document.getElementById('setting-grid-columns').dispatchEvent(new Event('input'));`);
     assert.equal(await browser.evaluate(`document.querySelector('.bookmark-title').textContent`), 'Cached title');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundColor`), 'rgba(18, 52, 86, 0.25)');
+    assert.equal(await browser.evaluate(`document.getElementById('setting-background-transparency').value`), '75');
+    assert.match(await browser.evaluate(`getComputedStyle(document.documentElement).backgroundImage`), /data:image/);
+    assert.equal(await browser.evaluate(`getComputedStyle(document.body).backgroundImage`), 'none');
+    assert.equal(await browser.evaluate(`getComputedStyle(document.querySelector('[gs-id="20"] .folder-title')).color`), 'rgb(52, 86, 120)');
     assert.equal(await browser.evaluate(`fixture.data.tiles.length`), 3);
     assert.ok(await browser.evaluate(`fixture.data.tiles.some(tile => tile.id === 'legacy')`));
     await browser.evaluate(`document.querySelector('[gs-id="10"] .remove-tile').click()`);

@@ -293,6 +293,14 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
         });
     }
 
+    function applyDefaultFolderTitleColorToFolderTiles() {
+        grid.getGridItems().forEach(item => {
+            if (item.querySelector('.folder-tile') && !getGridNode(item)?.textColor) {
+                applyFolderTitleColor(item);
+            }
+        });
+    }
+
     function applyDefaultLinkTextColorToBookmarkTiles() {
         grid.getGridItems().forEach(item => {
             const node = getGridNode(item);
@@ -316,5 +324,5 @@ export function createDesktop({ renderer, globalSettings, showBubbleMessage, han
 
     bindTileActions({ grid, globalSettings, renderer, saveLayout, addTileToGrid, findChildFolderTilePosition });
     return { grid, getLayout, loadInitialLayout, addTileToGrid, saveLayout, importBookmarks,
-        applyTileTransparencyToAllTiles, applyDefaultLinkTextColorToBookmarkTiles };
+        applyTileTransparencyToAllTiles, applyDefaultLinkTextColorToBookmarkTiles, applyDefaultFolderTitleColorToFolderTiles };
 }

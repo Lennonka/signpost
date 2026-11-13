@@ -17,6 +17,8 @@ Signpost is a Chrome Manifest V3 extension that replaces the new tab page with a
 - Keep the extension usable directly as an unpacked extension. Do not introduce a build pipeline or framework without a task requirement.
 - Preserve existing storage keys, tile records, and configuration backup compatibility unless a breaking change is explicitly required. Update the format documentation and schema when changing the backup format.
 - Keep all writes to `tiles` in the background worker through the shared queue in `js/layout-store.js`. Desktop changes go through `js/layout-client.js` so concurrent tabs preserve unrelated updates.
+- Paint the desktop image only on the document root and the translucent color overlay on the body so the image remains below the overlay. Keep background transparency defaults, backup validation, and schema aligned; accept older backups that omit transparency.
+- Apply default folder title and bookmark link colors only to tiles without a saved text color override. Keep new settings optional in backup imports with their documented defaults.
 - Use the existing Chrome API wrappers and error-handling patterns. Preserve cached tiles when bookmark reads fail.
 - After changes, review and update `README.md` and `AGENTS.md` as needed to keep documented behavior, architecture, setup, validation commands, and agent instructions accurate.
 

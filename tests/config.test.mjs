@@ -104,3 +104,23 @@ test('manual invalid import fixtures demonstrate configuration and syntax errors
     });
     assert.throws(() => parseConfig(fixture('config-invalid-syntax.json')), /Invalid JSON syntax:/);
 });
+
+test('overlay transparency round-trips and older backups default to 50 percent', () => {
+    const config = createExport({ desktopBackgroundTransparency: 75 }, [], tree);
+    assert.equal(prepareImport(config, tree).globalSettings.desktopBackgroundTransparency, 75);
+    for (const invalid of [-1, 101, 50.5, '50', null]) {
+        assert.throws(() => validateConfig({ ...config, settings: { ...config.settings, desktopBackgroundTransparency: invalid } }),
+            /settings.desktopBackgroundTransparency: expected an integer from 0 to 100/);
+    }
+    delete config.settings.desktopBackgroundTransparency;
+    assert.equal(prepareImport(config, tree).globalSettings.desktopBackgroundTransparency, 50);
+});
+
+test('folder title default round-trips while older backups retain black', () => {
+    const config = createExport({ defaultFolderTitleColor: '#123456' }, [], tree);
+    assert.equal(prepareImport(config, tree).globalSettings.defaultFolderTitleColor, '#123456');
+    assert.throws(() => validateConfig({ ...config, settings: { ...config.settings, defaultFolderTitleColor: 'red' } }),
+        /settings.defaultFolderTitleColor: expected a hex color/);
+    delete config.settings.defaultFolderTitleColor;
+    assert.equal(prepareImport(config, tree).globalSettings.defaultFolderTitleColor, '#000000');
+});

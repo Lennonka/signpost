@@ -6,7 +6,7 @@ export function bindTileActions({ grid, globalSettings, renderer, saveLayout, ad
     const desktop = document.getElementById('desktop');
     let activeMenu = null;
     const { applyTileBackground, applyFolderTitleColor, applyBookmarkLinkTextColor,
-        getDefaultTileBackgroundColor, getDefaultLinkTextColor } = renderer;
+        getDefaultTileBackgroundColor, getDefaultLinkTextColor, getDefaultFolderTitleColor } = renderer;
 
     function hideMenu() {
         activeMenu?.classList.add('hidden');
@@ -64,7 +64,7 @@ export function bindTileActions({ grid, globalSettings, renderer, saveLayout, ad
                     node.textColor = color;
                     (isFolder ? applyFolderTitleColor : applyBookmarkLinkTextColor)(tileEl, color);
                     saveLayout();
-                }, initialColor: node.textColor || (isFolder ? '#000000' : getDefaultLinkTextColor()), label: isFolder ? 'Title color' : 'Link text color' });
+                }, initialColor: node.textColor || (isFolder ? getDefaultFolderTitleColor() : getDefaultLinkTextColor()), label: isFolder ? 'Title color' : 'Link text color' });
             }
         } else if (icon) {
             const menu = icon.querySelector('.tile-menu');

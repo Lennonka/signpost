@@ -1,4 +1,4 @@
-import { FALLBACK_TILE_BACKGROUND_COLOR, DEFAULT_LINK_TEXT_COLOR } from './model.js';
+import { FALLBACK_TILE_BACKGROUND_COLOR, DEFAULT_LINK_TEXT_COLOR, DEFAULT_FOLDER_TITLE_COLOR } from './model.js';
 import { colorToRgba, getScrollbarColors, escapeHTML } from './colors.js';
 import { getFavicon } from './favicon.js';
 
@@ -13,6 +13,10 @@ export function createTileRenderer(globalSettings) {
 
     function getDefaultLinkTextColor() {
         return globalSettings.defaultLinkTextColor || DEFAULT_LINK_TEXT_COLOR;
+    }
+
+    function getDefaultFolderTitleColor() {
+        return globalSettings.defaultFolderTitleColor || DEFAULT_FOLDER_TITLE_COLOR;
     }
 
     function applyTileBackground(tileEl, baseColor) {
@@ -33,10 +37,8 @@ export function createTileRenderer(globalSettings) {
     }
 
     function applyFolderTitleColor(tileEl, color) {
-        if (!color) return;
-
         const title = tileEl?.querySelector('.folder-title');
-        if (title) title.style.color = color;
+        if (title) title.style.color = color || getDefaultFolderTitleColor();
     }
 
     function applyBookmarkLinkTextColor(tileEl, color) {
@@ -123,6 +125,6 @@ export function createTileRenderer(globalSettings) {
         return tileHTML;
     }
 
-    return { getDefaultTileBackgroundColor, getDefaultLinkTextColor,
+    return { getDefaultTileBackgroundColor, getDefaultLinkTextColor, getDefaultFolderTitleColor,
         applyTileBackground, applyFolderTitleColor, applyBookmarkLinkTextColor, buildTileHTML };
 }

@@ -1,4 +1,5 @@
 export const FALLBACK_TILE_BACKGROUND_COLOR = '#dbdbdb';
+export const DEFAULT_FOLDER_TITLE_COLOR = '#000000';
 export const DEFAULT_LINK_TEXT_COLOR = '#0000ee';
 export const DEFAULT_DESKTOP_TEXT_SIZE = 14;
 export const MIN_DESKTOP_TEXT_SIZE = 8;
@@ -13,9 +14,11 @@ export const defaultSettings = {
     tileSize: 140,
     gridColumns: DEFAULT_GRID_COLUMNS,
     desktopBackgroundColor: '#ffffff',
+    desktopBackgroundTransparency: 50,
     desktopTextSize: DEFAULT_DESKTOP_TEXT_SIZE,
     defaultTileBackgroundColor: FALLBACK_TILE_BACKGROUND_COLOR,
     defaultLinkTextColor: DEFAULT_LINK_TEXT_COLOR,
+    defaultFolderTitleColor: DEFAULT_FOLDER_TITLE_COLOR,
     desktopBackgroundImage: null,
     tileBackgroundTransparency: 50,
     alwaysShowResizeHandle: false,
