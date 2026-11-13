@@ -247,8 +247,16 @@ button:hover {
 
 .setting-row small {
    color: #6f6d68;
-   font-size: 12px;
+   font-size: 13px;
+   line-height: 1.45;
    margin-top: 2px;
+}
+
+.setting-row .setting-value {
+   color: #242424;
+   font-size: 16px;
+   font-weight: 600;
+   font-variant-numeric: tabular-nums;
 }
 
 .color-setting .color-swatch {
@@ -269,7 +277,7 @@ button:hover {
 .file-setting input[type="file"] {
    max-width: 100%;
    color: #5e5b56;
-   font-size: 12px;
+   font-size: 13px;
 }
 
 .range-setting {
