@@ -68,8 +68,8 @@ br {
    }
 }
 
-/* Backdrop when any modal is visible */
-body.modal-open::before {
+/* Dim the desktop for dialogs other than Settings. */
+body.modal-open:has(.modal:not(#settings-panel):not(.hidden))::before {
    content: "";
    position: fixed;
    inset: 0;

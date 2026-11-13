@@ -30,7 +30,7 @@ In Settings → Configure → Tiles, **Default folder title color** appears afte
 
 ## Desktop background
 
-In Settings → Configure, choose a **Background image** first, then a **Background overlay color**. The color is painted above the image. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Clearing the background removes the image and resets the overlay color and transparency.
+In Settings → Configure, choose a **Background image** first, then a **Background overlay color**. The color is painted above the image. **Background overlay transparency** defaults to 50%; 0% hides the image with an opaque color, and 100% shows the image without the overlay. Changes apply immediately and persist after reload. Settings opens without dimming the desktop so you can preview its appearance. Clearing the background removes the image and resets the overlay color and transparency.
 
 Existing saved colors now apply as overlays over existing images, with 50% transparency when no value was saved. No data migration is needed.
 

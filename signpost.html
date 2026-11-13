@@ -55,8 +55,10 @@
         </div>
 
         <div class="settings-tabs" role="tablist" aria-label="Settings categories">
-            <button id="settings-tab-configure" role="tab" aria-selected="true" aria-controls="settings-configure" tabindex="0">Configure</button>
-            <button id="settings-tab-backup" role="tab" aria-selected="false" aria-controls="settings-backup" tabindex="-1">Backup</button>
+            <button id="settings-tab-configure" role="tab" aria-selected="true" aria-controls="settings-configure"
+                tabindex="0">Configure</button>
+            <button id="settings-tab-backup" role="tab" aria-selected="false" aria-controls="settings-backup"
+                tabindex="-1">Backup</button>
         </div>
 
         <div id="settings-configure" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-configure">
@@ -137,6 +139,10 @@
                     </span>
                     <input type="range" id="setting-tile-transparency" min="0" max="100" step="1" />
                 </label>
+            </section>
+
+            <section class="settings-section">
+                <h4>Behavior</h4>
                 <label class="setting-row toggle-setting">
                     <span>
                         <strong>Always show resize handle</strong>
@@ -151,10 +157,6 @@
                     </span>
                     <input type="checkbox" id="setting-always-show-menu-icon" />
                 </label>
-            </section>
-
-            <section class="settings-section">
-                <h4>Behavior</h4>
                 <label class="setting-row toggle-setting">
                     <span>
                         <strong>Open bookmarks in new tab</strong>
@@ -165,7 +167,7 @@
                 <label class="setting-row toggle-setting">
                     <span>
                         <strong>Confirm before removing a tile</strong>
-                        <small>Adds a confirmation prompt.</small>
+                        <small>Adds a confirmation prompt. Tile removal does not delete the bookmark.</small>
                     </span>
                     <input type="checkbox" id="setting-confirm-remove" />
                 </label>
@@ -176,14 +178,17 @@
         <div id="settings-backup" class="settings-body" role="tabpanel" aria-labelledby="settings-tab-backup" hidden>
             <section class="settings-section">
                 <h4>Export configuration</h4>
-                <p class="settings-description">Save your settings, background image, and tile layout to a JSON file.</p>
+                <p class="settings-description">Save your settings, background image, and tile layout to a JSON file.
+                </p>
                 <button id="export-settings" class="secondary-action">Export to JSON</button>
             </section>
             <section class="settings-section">
                 <h4>Import configuration</h4>
-                <p class="settings-description">Load your settings, background image, and tile layout from a JSON file.</p>
+                <p class="settings-description">Load your settings, background image, and tile layout from a JSON file.
+                </p>
                 <label class="setting-row file-setting">
-                    <input id="import-settings" type="file" accept=".json,application/json" aria-label="Import configuration from JSON" />
+                    <input id="import-settings" type="file" accept=".json,application/json"
+                        aria-label="Import configuration from JSON" />
                 </label>
                 <p id="import-status" class="settings-description" role="status" aria-live="polite"></p>
             </section>
