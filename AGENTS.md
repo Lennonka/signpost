@@ -22,10 +22,10 @@ Signpost is a Chrome Manifest V3 extension that replaces the new tab page with a
 
 ## Versioning
 
-- Bump `version` in `manifest.json` for change sets that include non-documentation changes. Documentation-only changes, including updates to `README.md` and `AGENTS.md`, do not require a version bump.
+- Bump `version` in `manifest.json` once per branch when it includes non-documentation changes. Documentation-only changes, including updates to `README.md` and `AGENTS.md`, do not require a version bump.
 - Use the existing `MAJOR.MINOR` format. For non-breaking changes, increment the minor version (for example, `4.0` → `4.1`). For breaking changes, increment the major version and reset the minor version to zero (for example, `4.1` → `5.0`).
 - Treat incompatible changes to persisted data, backup formats, or existing user-facing behavior as breaking changes. Describe the compatibility impact and any migration steps.
-- Apply one version bump per change set, choosing the major bump if it contains any breaking change. Do not change `manifest_version` as part of a release version bump.
+- Before bumping, compare `manifest.json` with the branch's base and check committed and uncommitted changes. If the branch already has a version bump, reuse it for subsequent work instead of incrementing again. If later work introduces a breaking change, adjust that single bump to a major bump relative to the base version. Do not change `manifest_version` as part of a release version bump.
 
 ## Validation
 
